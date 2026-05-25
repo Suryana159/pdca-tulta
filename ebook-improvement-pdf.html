@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Ebook Builder – 7 Langkah Improvement</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --ink: #1a1209;
+    --paper: #faf7f2;
+    --cream: #f5f0e8;
+    --gold: #c9a227;
+    --gold-light: #e8c84a;
+    --rust: #c0392b;
+    --teal: #1a7a6e;
+    --navy: #1a2744;
+    --s1:#c9a227; --s2:#c0392b; --s3:#7b3fa0; --s4:#1a4fa0;
+    --s5:#1a7a6e; --s6:#c05c1a; --s7:#1a7a9a;
+    --shadow: 0 4px 24px rgba(26,18,9,0.13);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Source Serif 4', Georgia, serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--navy);
+    padding: 0 28px;
+    height: 56px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+    border-bottom: 3px solid var(--gold);
+  }
+  .topbar-brand {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 3px;
+    color: var(--gold); text-transform: uppercase;
+  }
+  .topbar-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px; color: #fff; font-weight: 700;
+  }
+  .btn-group { display: flex; gap: 8px; }
+  .btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    border: none; padding: 7px 16px; border-radius: 4px; cursor: pointer;
+    transition: all .18s; font-weight: 600;
+  }
+  .btn-outline { background: transparent; border: 1.5px solid rgba(255,255,255,0.3); color: #fff; }
+  .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-gold { background: var(--gold); color: var(--navy); }
+  .btn-gold:hover { background: var(--gold-light); }
+  .btn-download {
+    background: linear-gradient(135deg, var(--teal), #0f5c52);
+    color: #fff; padding: 7px 18px;
+    box-shadow: 0 2px 10px rgba(26,122,110,0.4);
+  }
+  .btn-download:hover { background: linear-gradient(135deg, #1e8a7c, var(--teal)); transform: translateY(-1px); }
+
+  /* ── LAYOUT ── */
+  .layout { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 56px); }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    background: var(--cream);
+    border-right: 1px solid #ddd7c9;
+    padding: 20px 12px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .sidebar-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 3px; color: #a09070;
+    text-transform: uppercase; padding: 0 8px; margin-bottom: 8px;
+  }
+  .step-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 10px; border-radius: 6px; cursor: pointer;
+    background: transparent; border: none; text-align: left;
+    transition: all .15s; width: 100%;
+  }
+  .step-btn:hover { background: #ece6d8; }
+  .step-btn.active { background: var(--navy); }
+  .step-icon {
+    width: 28px; height: 28px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0;
+  }
+  .step-info { flex: 1; min-width: 0; }
+  .step-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 2px; color: #a09070;
+  }
+  .step-btn.active .step-num { color: rgba(255,255,255,0.5); }
+  .step-name {
+    font-size: 11px; font-weight: 600; color: var(--ink);
+    line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .step-btn.active .step-name { color: #fff; }
+  .step-check { font-size: 13px; }
+  .progress-wrap { margin-top: 16px; padding: 12px; background: #e8e2d5; border-radius: 8px; }
+  .progress-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #a09070; letter-spacing: 2px; margin-bottom: 6px; }
+  .progress-bar-bg { background: #d5cfc3; border-radius: 3px; height: 5px; }
+  .progress-bar-fill { height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--gold), var(--teal)); transition: width .4s; }
+  .progress-count { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #a09070; text-align: right; margin-top: 4px; }
+
+  /* ── MAIN PANEL ── */
+  .main { padding: 28px 32px; overflow-y: auto; }
+
+  /* Step header */
+  .step-header {
+    display: flex; align-items: flex-start; gap: 16px;
+    padding: 20px 24px; border-radius: 10px; margin-bottom: 22px;
+    border-left: 5px solid currentColor;
+    background: var(--cream);
+  }
+  .step-header-icon { font-size: 36px; line-height: 1; }
+  .step-header-bab {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 3px;
+  }
+  .step-header-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px; font-weight: 700; color: var(--ink); line-height: 1.2;
+  }
+  .sub-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .sub-tag {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    border: 1px solid; border-radius: 20px; padding: 2px 10px;
+  }
+
+  /* Two-column grid */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .panel {
+    background: #fff; border: 1px solid #ddd7c9; border-radius: 10px; padding: 18px;
+  }
+  .panel-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    letter-spacing: 2.5px; color: #a09070; text-transform: uppercase;
+    margin-bottom: 14px; display: flex; align-items: center; gap: 6px;
+  }
+  .panel-label::after { content:''; flex:1; height:1px; background:#e8e2d5; }
+
+  /* Form */
+  .form-group { margin-bottom: 12px; }
+  .form-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #a09070; letter-spacing: 1px; display: block; margin-bottom: 4px; }
+  .form-input {
+    width: 100%; background: var(--paper); border: 1.5px solid #ddd7c9;
+    border-radius: 6px; padding: 8px 10px; font-family: 'Source Serif 4', serif;
+    font-size: 12px; color: var(--ink); outline: none; transition: border-color .15s;
+  }
+  .form-input:focus { border-color: var(--gold); }
+  .btn-generate {
+    width: 100%; margin-top: 14px; padding: 11px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 2px; font-weight: 600; border: none; border-radius: 7px;
+    cursor: pointer; transition: all .2s; color: #fff;
+  }
+
+  /* Chart canvas */
+  .chart-wrap { position: relative; height: 200px; }
+
+  /* Narasi */
+  .narasi-text {
+    font-size: 12px; line-height: 1.85; color: #3d3020;
+    font-family: 'Source Serif 4', serif; font-style: italic;
+  }
+  .narasi-placeholder {
+    text-align: center; padding: 24px 0;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #c5bfb0;
+  }
+  .generating-dots::after {
+    content: '...'; animation: dots 1.2s steps(4, end) infinite;
+  }
+  @keyframes dots { 0%,20%{content:'.'} 40%{content:'..'} 60%,100%{content:'...'} }
+
+  /* Nav */
+  .step-nav { display: flex; justify-content: space-between; margin-top: 20px; }
+
+  /* Download section */
+  .download-bar {
+    background: linear-gradient(135deg, var(--navy), #0f1e3a);
+    border: 1px solid var(--gold);
+    border-radius: 10px; padding: 18px 22px;
+    display: flex; align-items: center; gap: 16px; margin-bottom: 22px;
+  }
+  .download-icon { font-size: 32px; }
+  .download-info { flex: 1; }
+  .download-title {
+    font-family: 'Playfair Display', serif; font-size: 15px; color: #fff; margin-bottom: 3px;
+  }
+  .download-desc { font-size: 11px; color: rgba(255,255,255,0.5); font-family: 'JetBrains Mono', monospace; }
+  .btn-dl-big {
+    background: linear-gradient(135deg, var(--gold), #e8a500);
+    color: var(--navy); font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 2px; font-weight: 700;
+    border: none; padding: 12px 22px; border-radius: 7px; cursor: pointer;
+    transition: all .2s; white-space: nowrap; flex-shrink: 0;
+  }
+  .btn-dl-big:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(201,162,39,0.4); }
+  .btn-dl-big:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 999;
+    background: var(--teal); color: #fff;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    padding: 12px 20px; border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    transform: translateY(80px); opacity: 0; transition: all .3s;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* Loading overlay */
+  .loading-overlay {
+    position: fixed; inset: 0; background: rgba(26,18,9,0.85);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 200; opacity: 0; pointer-events: none; transition: opacity .3s;
+  }
+  .loading-overlay.show { opacity: 1; pointer-events: all; }
+  .loading-spinner {
+    width: 56px; height: 56px; border: 3px solid rgba(201,162,39,0.2);
+    border-top-color: var(--gold); border-radius: 50%;
+    animation: spin .9s linear infinite; margin-bottom: 20px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text {
+    font-family: 'Playfair Display', serif; font-size: 16px; color: #fff; margin-bottom: 8px;
+  }
+  .loading-sub { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--gold); letter-spacing: 2px; }
+
+  @media (max-width: 768px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .two-col { grid-template-columns: 1fr; }
+    .main { padding: 16px; }
+    .topbar-title { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-brand">⚙ AI Ebook Builder</div>
+  <div class="topbar-title">7 Langkah Improvement</div>
+  <div class="btn-group">
+    <button class="btn btn-outline" onclick="toggleView()">👁 Preview</button>
+    <button class="btn btn-download" onclick="downloadPDF()" id="btnDownload">⬇ Unduh PDF</button>
+  </div>
+</div>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loadingText">Membuat PDF...</div>
+  <div class="loading-sub" id="loadingSub">Mohon tunggu sebentar</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✓ PDF berhasil diunduh!</div>
+
+<!-- MAIN LAYOUT -->
+<div class="layout" id="mainLayout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-label">Langkah</div>
+    <div id="sidebarSteps"></div>
+    <div class="progress-wrap">
+      <div class="progress-label">Progress Ebook</div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+      <div class="progress-count" id="progressCount">0 / 7 BAB</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main" id="mainContent">
+    <!-- Injected by JS -->
+  </div>
+</div>
+
+<!-- PREVIEW PANEL (hidden by default) -->
+<div id="previewPanel" style="display:none; padding: 32px; max-width: 800px; margin: 0 auto;"></div>
+
+<script>
+// ── DATA ────────────────────────────────────────────────────────────────────
+const STEPS = [
+  { id:1, icon:"🎯", color:"#c9a227", title:"Menentukan Tema & Judul",
+    subs:["1.1 Menentukan Tema","1.2 Menentukan Judul","1.3 Menentukan Initial Goal"],
+    chartType:"bar_gap",
+    fields:[
+      {key:"tema",label:"Tema Improvement",placeholder:"Contoh: Menghilangkan Gangguan Belt Conveyor Putus",type:"text"},
+      {key:"judul",label:"Judul Makalah",placeholder:"Contoh: Upaya Menghilangkan Belt Putus dari 18 menjadi 0/bln",type:"text"},
+      {key:"baseline",label:"Baseline (Kondisi Awal)",placeholder:"Contoh: 18 kejadian/bulan",type:"text"},
+      {key:"goal",label:"Initial Goal (Target)",placeholder:"Contoh: 0 kejadian/bulan",type:"text"},
+      {key:"area",label:"Area / Departemen",placeholder:"Contoh: Seksi Conveyor – Produksi",type:"text"},
+      {key:"periode",label:"Periode",placeholder:"Contoh: Januari – Juni 2025",type:"text"},
+    ]},
+  { id:2, icon:"🔍", color:"#c0392b", title:"Menganalisa Penyebab",
+    chartType:"pareto",
+    fields:[
+      {key:"p1",label:"Penyebab 1",placeholder:"Contoh: Tegangan belt tidak standar",type:"text"},
+      {key:"f1",label:"Frekuensi 1 (angka)",placeholder:"42",type:"number"},
+      {key:"p2",label:"Penyebab 2",placeholder:"Contoh: Belt aus tidak diganti",type:"text"},
+      {key:"f2",label:"Frekuensi 2",placeholder:"31",type:"number"},
+      {key:"p3",label:"Penyebab 3",placeholder:"Contoh: Overload",type:"text"},
+      {key:"f3",label:"Frekuensi 3",placeholder:"18",type:"number"},
+      {key:"p4",label:"Penyebab 4",placeholder:"Contoh: Sambungan tidak presisi",type:"text"},
+      {key:"f4",label:"Frekuensi 4",placeholder:"9",type:"number"},
+    ]},
+  { id:3, icon:"🧪", color:"#7b3fa0", title:"Menguji Penyebab Dominan",
+    chartType:"radar",
+    fields:[
+      {key:"d1",label:"Penyebab Dominan 1",placeholder:"Contoh: Tegangan belt",type:"text"},
+      {key:"k1",label:"Korelasi 1 (0-100)",placeholder:"94",type:"number"},
+      {key:"d2",label:"Penyebab Dominan 2",placeholder:"Contoh: Belt aus",type:"text"},
+      {key:"k2",label:"Korelasi 2",placeholder:"82",type:"number"},
+      {key:"d3",label:"Penyebab Dominan 3",placeholder:"Contoh: Overload",type:"text"},
+      {key:"k3",label:"Korelasi 3",placeholder:"67",type:"number"},
+      {key:"metode",label:"Metode Uji",placeholder:"Contoh: Scatter Diagram & Pearson",type:"text"},
+    ]},
+  { id:4, icon:"🛠️", color:"#1a4fa0", title:"Rencana & Melaksanakan Perbaikan",
+    chartType:"hbar",
+    fields:[
+      {key:"a1",label:"Aksi Perbaikan 1",placeholder:"Contoh: Kalibrasi tensioner belt",type:"text"},
+      {key:"pr1",label:"Progress 1 (%)",placeholder:"100",type:"number"},
+      {key:"a2",label:"Aksi Perbaikan 2",placeholder:"Contoh: Penggantian belt terjadwal",type:"text"},
+      {key:"pr2",label:"Progress 2 (%)",placeholder:"100",type:"number"},
+      {key:"a3",label:"Aksi Perbaikan 3",placeholder:"Contoh: Pasang sensor overload",type:"text"},
+      {key:"pr3",label:"Progress 3 (%)",placeholder:"90",type:"number"},
+      {key:"pic",label:"PIC / Tim",placeholder:"Contoh: Tim QCC & Maintenance",type:"text"},
+    ]},
+  { id:5, icon:"📊", color:"#1a7a6e", title:"Meneliti Hasil",
+    chartType:"grouped_bar",
+    fields:[
+      {key:"sb1",label:"Bulan 1 – Sebelum",placeholder:"18",type:"number"},
+      {key:"ss1",label:"Bulan 1 – Sesudah",placeholder:"9",type:"number"},
+      {key:"sb2",label:"Bulan 2 – Sebelum",placeholder:"16",type:"number"},
+      {key:"ss2",label:"Bulan 2 – Sesudah",placeholder:"4",type:"number"},
+      {key:"sb3",label:"Bulan 3 – Sebelum",placeholder:"17",type:"number"},
+      {key:"ss3",label:"Bulan 3 – Sesudah",placeholder:"0",type:"number"},
+      {key:"pencapaian",label:"Pencapaian Akhir (%)",placeholder:"100",type:"number"},
+    ]},
+  { id:6, icon:"📋", color:"#c05c1a", title:"Membuat Standar Baru",
+    chartType:"pie",
+    fields:[
+      {key:"sop1",label:"Standar Baru 1",placeholder:"Contoh: SOP Kalibrasi Tensioner",type:"text"},
+      {key:"e1",label:"Efektivitas 1 (%)",placeholder:"96",type:"number"},
+      {key:"sop2",label:"Standar Baru 2",placeholder:"Contoh: SOP Penggantian Belt",type:"text"},
+      {key:"e2",label:"Efektivitas 2 (%)",placeholder:"91",type:"number"},
+      {key:"sop3",label:"Standar Baru 3",placeholder:"Contoh: SOP Pengecekan Beban",type:"text"},
+      {key:"e3",label:"Efektivitas 3 (%)",placeholder:"85",type:"number"},
+      {key:"status",label:"Status Implementasi",placeholder:"Contoh: Sudah disosialisasikan 3 shift",type:"text"},
+    ]},
+  { id:7, icon:"🚀", color:"#1a7a9a", title:"Menentukan Tema Berikutnya",
+    chartType:"vbar_rank",
+    fields:[
+      {key:"tema_next",label:"Tema Terpilih Berikutnya",placeholder:"Contoh: Mengurangi Downtime Mesin Packing",type:"text"},
+      {key:"t1",label:"Kandidat Tema 1",placeholder:"Contoh: Downtime Mesin Packing",type:"text"},
+      {key:"s1",label:"Skor Kandidat 1",placeholder:"88",type:"number"},
+      {key:"t2",label:"Kandidat Tema 2",placeholder:"Contoh: Efisiensi Energi Motor",type:"text"},
+      {key:"s2",label:"Skor Kandidat 2",placeholder:"74",type:"number"},
+      {key:"t3",label:"Kandidat Tema 3",placeholder:"Contoh: Reject Rate Produk",type:"text"},
+      {key:"s3",label:"Skor Kandidat 3",placeholder:"63",type:"number"},
+      {key:"target_next",label:"Target Goal Berikutnya",placeholder:"Contoh: 90% penurunan downtime",type:"text"},
+    ]},
+];
+
+// State
+let currentStep = 1;
+let formData = {};
+let generatedContent = {};
+let chartInstances = {};
+let previewMode = false;
+
+// ── RENDER SIDEBAR ──────────────────────────────────────────────────────────
+function renderSidebar() {
+  const el = document.getElementById('sidebarSteps');
+  el.innerHTML = STEPS.map(s => `
+    <button class="step-btn ${s.id===currentStep?'active':''}" onclick="goStep(${s.id})">
+      <div class="step-icon" style="background:${s.color}22;">${s.icon}</div>
+      <div class="step-info">
+        <div class="step-num">LANGKAH ${s.id}</div>
+        <div class="step-name">${s.title}</div>
+      </div>
+      <div class="step-check">${generatedContent[s.id]?'<span style="color:#1a7a6e">✓</span>':'<span style="color:#ccc">○</span>'}</div>
+    </button>`).join('');
+  const done = Object.keys(generatedContent).length;
+  document.getElementById('progressFill').style.width = (done/7*100)+'%';
+  document.getElementById('progressCount').textContent = `${done} / 7 BAB`;
+}
+
+// ── RENDER STEP ─────────────────────────────────────────────────────────────
+function renderStep(id) {
+  const s = STEPS.find(x=>x.id===id);
+  const d = formData[id]||{};
+  const content = document.getElementById('mainContent');
+
+  content.innerHTML = `
+    <!-- Download bar -->
+    <div class="download-bar">
+      <div class="download-icon">📥</div>
+      <div class="download-info">
+        <div class="download-title">Unduh Ebook sebagai PDF</div>
+        <div class="download-desc">Gratis · Tersimpan di perangkat Anda · Tidak perlu akun</div>
+      </div>
+      <button class="btn-dl-big" onclick="downloadPDF()" id="btnDlBig">⬇ UNDUH PDF</button>
+    </div>
+
+    <!-- Step header -->
+    <div class="step-header" style="color:${s.color}; border-left-color:${s.color};">
+      <div class="step-header-icon">${s.icon}</div>
+      <div>
+        <div class="step-header-bab" style="color:${s.color}">BAB ${s.id} · LANGKAH ${s.id}</div>
+        <div class="step-header-title">${s.title}</div>
+        ${s.subs ? `<div class="sub-tags">${s.subs.map(sub=>`<span class="sub-tag" style="color:${s.color};border-color:${s.color}44;background:${s.color}11">${sub}</span>`).join('')}</div>` : ''}
+      </div>
+    </div>
+
+    <!-- Two column -->
+    <div class="two-col">
+      <!-- Form -->
+      <div class="panel">
+        <div class="panel-label">✏ Input Data</div>
+        ${s.fields.map(f=>`
+          <div class="form-group">
+            <label class="form-label">${f.label}</label>
+            <input class="form-input" type="${f.type}" id="f_${id}_${f.key}"
+              placeholder="${f.placeholder}"
+              value="${d[f.key]||''}"
+              oninput="saveField(${id},'${f.key}',this.value)"/>
+          </div>`).join('')}
+        <button class="btn-generate" style="background:${s.color}"
+          onclick="generateContent(${id})" id="btnGen_${id}">
+          ✨ Generate Konten AI
+        </button>
+      </div>
+
+      <!-- Right column: chart + narasi -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="panel">
+          <div class="panel-label" style="color:${s.color}">📈 Grafik Statistik</div>
+          <div class="chart-wrap">
+            <canvas id="chart_${id}"></canvas>
+          </div>
+        </div>
+        <div class="panel" style="flex:1;">
+          <div class="panel-label">📝 Narasi AI</div>
+          <div id="narasi_${id}">
+            ${generatedContent[id]
+              ? `<p class="narasi-text">${generatedContent[id].replace(/\n\n/g,'</p><p class="narasi-text" style="margin-top:10px">').replace(/\n/g,' ')}</p>`
+              : `<div class="narasi-placeholder">Isi data lalu klik<br><strong>Generate Konten AI</strong></div>`}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="step-nav">
+      <button class="btn btn-outline" onclick="goStep(${id-1})" ${id<=1?'disabled':''} style="background:var(--cream);color:var(--ink);border-color:#ccc;">
+        ← Langkah ${id-1}
+      </button>
+      <button class="btn" onclick="goStep(${id+1})" ${id>=7?'disabled':''} style="background:${s.color};color:#fff;">
+        Langkah ${id+1} →
+      </button>
+    </div>`;
+
+  // Draw chart
+  setTimeout(()=>drawChart(id), 50);
+}
+
+function saveField(stepId, key, value) {
+  if (!formData[stepId]) formData[stepId] = {};
+  formData[stepId][key] = value;
+  // Redraw chart live
+  drawChart(stepId);
+}
+
+function goStep(id) {
+  if (id<1||id>7) return;
+  currentStep = id;
+  renderSidebar();
+  renderStep(id);
+}
+
+// ── CHARTS ──────────────────────────────────────────────────────────────────
+const COLORS7 = ['#c9a227','#c0392b','#7b3fa0','#1a4fa0','#1a7a6e','#c05c1a','#1a7a9a'];
+
+function drawChart(id) {
+  const s = STEPS.find(x=>x.id===id);
+  const d = formData[id]||{};
+  const canvas = document.getElementById('chart_'+id);
+  if (!canvas) return;
+  if (chartInstances[id]) { chartInstances[id].destroy(); }
+  const ctx = canvas.getContext('2d');
+
+  const baseFont = { family: "'Source Serif 4', serif" };
+
+  if (s.chartType === 'bar_gap') {
+    const bNum = parseFloat(d.baseline) || 18;
+    const gNum = parseFloat(d.goal) || 0;
+    chartInstances[id] = new Chart(ctx, { type:'bar',
+      data:{ labels:['Baseline (Sebelum)','Target (Sesudah)'],
+        datasets:[{data:[bNum,gNum], backgroundColor:['#c0392b99','#1a7a6e99'],
+          borderColor:['#c0392b','#1a7a6e'], borderWidth:2, borderRadius:6}]},
+      options:{ plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>`${v.raw} kej.`}}},
+        scales:{y:{beginAtZero:true,grid:{color:'#f0ece4'}}},
+        responsive:true, maintainAspectRatio:false}});
+  }
+
+  else if (s.chartType === 'pareto') {
+    const items = [
+      {label:(d.p1||'P1').substring(0,18), v:+d.f1||42},
+      {label:(d.p2||'P2').substring(0,18), v:+d.f2||31},
+      {label:(d.p3||'P3').substring(0,18), v:+d.f3||18},
+      {label:(d.p4||'P4').substring(0,18), v:+d.f4||9},
+    ].sort((a,b)=>b.v-a.v);
+    const total = items.reduce((s,i)=>s+i.v,0);
+    let cum=0; const pcts = items.map(i=>{cum+=i.v; return+(cum/total*100).toFixed(1);});
+    chartInstances[id] = new Chart(ctx, { type:'bar',
+      data:{ labels:items.map(i=>i.label),
+        datasets:[
+          {type:'bar',label:'Frekuensi',data:items.map(i=>i.v),
+            backgroundColor:'#c0392b88',borderColor:'#c0392b',borderWidth:2,borderRadius:4,yAxisID:'y'},
+          {type:'line',label:'Kumulatif %',data:pcts,
+            borderColor:'#c9a227',backgroundColor:'transparent',borderWidth:2.5,
+            pointBackgroundColor:'#c9a227',pointRadius:5,yAxisID:'y2'}
+        ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        scales:{y:{beginAtZero:true,grid:{color:'#f0ece4'}},
+                y2:{position:'right',max:110,ticks:{callback:v=>v+'%'},grid:{display:false}}},
+        plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:12}}}}});
+  }
+
+  else if (s.chartType === 'radar') {
+    const labels = [d.d1||'D1', d.d2||'D2', d.d3||'D3'];
+    const vals   = [+d.k1||94, +d.k2||82, +d.k3||67];
+    chartInstances[id] = new Chart(ctx, { type:'radar',
+      data:{ labels,
+        datasets:[{label:'Korelasi',data:vals,
+          borderColor:'#7b3fa0',backgroundColor:'#7b3fa033',
+          borderWidth:2.5,pointBackgroundColor:'#7b3fa0',pointRadius:5}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        scales:{r:{beginAtZero:true,max:100,
+          ticks:{callback:v=>v+'%',font:{size:9}},
+          grid:{color:'#e8e2d5'},pointLabels:{font:{size:10}}}},
+        plugins:{legend:{display:false}}}});
+  }
+
+  else if (s.chartType === 'hbar') {
+    const labels = [(d.a1||'Aksi 1').substring(0,22),(d.a2||'Aksi 2').substring(0,22),(d.a3||'Aksi 3').substring(0,22)];
+    const vals = [+d.pr1||100, +d.pr2||100, +d.pr3||90];
+    chartInstances[id] = new Chart(ctx, { type:'bar',
+      data:{ labels,
+        datasets:[{data:vals,backgroundColor:['#1a4fa099','#1a4fa099','#3b82f699'],
+          borderColor:['#1a4fa0','#1a4fa0','#3b82f6'],borderWidth:2,borderRadius:4}]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+        scales:{x:{beginAtZero:true,max:110,ticks:{callback:v=>v+'%'},grid:{color:'#f0ece4'}}},
+        plugins:{legend:{display:false}}}});
+  }
+
+  else if (s.chartType === 'grouped_bar') {
+    chartInstances[id] = new Chart(ctx, { type:'bar',
+      data:{ labels:['Bulan 1','Bulan 2','Bulan 3'],
+        datasets:[
+          {label:'Sebelum',data:[+d.sb1||18,+d.sb2||16,+d.sb3||17],
+            backgroundColor:'#c0392b88',borderColor:'#c0392b',borderWidth:2,borderRadius:4},
+          {label:'Sesudah',data:[+d.ss1||9,+d.ss2||4,+d.ss3||0],
+            backgroundColor:'#1a7a6e88',borderColor:'#1a7a6e',borderWidth:2,borderRadius:4}
+        ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        scales:{y:{beginAtZero:true,grid:{color:'#f0ece4'}}},
+        plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:12}}}}});
+  }
+
+  else if (s.chartType === 'pie') {
+    const labels = [(d.sop1||'SOP 1').substring(0,20),(d.sop2||'SOP 2').substring(0,20),(d.sop3||'SOP 3').substring(0,20)];
+    const vals = [+d.e1||96, +d.e2||91, +d.e3||85];
+    chartInstances[id] = new Chart(ctx, { type:'doughnut',
+      data:{ labels,
+        datasets:[{data:vals,backgroundColor:['#c9a227cc','#c05c1acc','#1a7a9acc'],
+          borderColor:['#c9a227','#c05c1a','#1a7a9a'],borderWidth:2}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:12}}}}});
+  }
+
+  else if (s.chartType === 'vbar_rank') {
+    const labels = [(d.t1||'T1').substring(0,16),(d.t2||'T2').substring(0,16),(d.t3||'T3').substring(0,16)];
+    const vals = [+d.s1||88, +d.s2||74, +d.s3||63];
+    chartInstances[id] = new Chart(ctx, { type:'bar',
+      data:{ labels,
+        datasets:[{data:vals,
+          backgroundColor:['#1a7a9acc','#3b82f6aa','#7b3fa088'],
+          borderColor:['#1a7a9a','#3b82f6','#7b3fa0'],
+          borderWidth:2,borderRadius:6}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        scales:{y:{beginAtZero:true,max:110,grid:{color:'#f0ece4'}}},
+        plugins:{legend:{display:false}}}});
+  }
+}
+
+// ── AI GENERATION ────────────────────────────────────────────────────────────
+const AI_PROMPTS = {
+  1: d=>`Tulis narasi profesional BAB 1 makalah improvement. Tema: "${d.tema||'Improvement'}". Judul: "${d.judul||'-'}". Area: ${d.area||'-'}. Periode: ${d.periode||'-'}. Baseline: ${d.baseline||'-'}. Target: ${d.goal||'-'}. Sertakan 3 sub-pembahasan: 1.1 Penentuan Tema, 1.2 Penentuan Judul, 1.3 Initial Goal. Bahasa Indonesia formal, 200-250 kata, tanpa heading.`,
+  2: d=>`Tulis narasi BAB 2 "Menganalisa Penyebab" makalah improvement. Penyebab: (1) ${d.p1||'P1'}: ${d.f1||'?'}x, (2) ${d.p2||'P2'}: ${d.f2||'?'}x, (3) ${d.p3||'P3'}: ${d.f3||'?'}x, (4) ${d.p4||'P4'}: ${d.f4||'?'}x. Jelaskan fishbone, pareto, penyebab dominan. Bahasa Indonesia formal, 200-250 kata.`,
+  3: d=>`Tulis narasi BAB 3 "Menguji Penyebab Dominan". Penyebab dominan: ${d.d1||'D1'} (korelasi ${d.k1||'?'}%), ${d.d2||'D2'} (${d.k2||'?'}%), ${d.d3||'D3'} (${d.k3||'?'}%). Metode: ${d.metode||'Scatter Diagram'}. Bahasa Indonesia formal, 200-250 kata.`,
+  4: d=>`Tulis narasi BAB 4 "Membuat Rencana & Melaksanakan Perbaikan". Aksi: (1) ${d.a1||'Aksi 1'} ${d.pr1||'?'}%, (2) ${d.a2||'Aksi 2'} ${d.pr2||'?'}%, (3) ${d.a3||'Aksi 3'} ${d.pr3||'?'}%. PIC: ${d.pic||'-'}. Bahasa Indonesia formal, 200-250 kata.`,
+  5: d=>`Tulis narasi BAB 5 "Meneliti Hasil". Data bulan 1: ${d.sb1||'?'}→${d.ss1||'?'}, bulan 2: ${d.sb2||'?'}→${d.ss2||'?'}, bulan 3: ${d.sb3||'?'}→${d.ss3||'?'}. Pencapaian: ${d.pencapaian||'?'}%. Bahasa Indonesia formal, 200-250 kata.`,
+  6: d=>`Tulis narasi BAB 6 "Membuat Standar Baru". SOP: (1) ${d.sop1||'SOP 1'} ${d.e1||'?'}%, (2) ${d.sop2||'SOP 2'} ${d.e2||'?'}%, (3) ${d.sop3||'SOP 3'} ${d.e3||'?'}%. Status: ${d.status||'-'}. Bahasa Indonesia formal, 200-250 kata.`,
+  7: d=>`Tulis narasi BAB 7 "Menentukan Tema Berikutnya". Tema terpilih: "${d.tema_next||'-'}". Kandidat: ${d.t1||'T1'} (${d.s1||'?'}), ${d.t2||'T2'} (${d.s2||'?'}), ${d.t3||'T3'} (${d.s3||'?'}). Target: ${d.target_next||'-'}. Bahasa Indonesia formal, 200-250 kata.`,
+};
+
+async function generateContent(id) {
+  const btn = document.getElementById('btnGen_'+id);
+  btn.disabled = true; btn.textContent = '⏳ Generating...';
+  const d = formData[id]||{};
+  const narasiEl = document.getElementById('narasi_'+id);
+  narasiEl.innerHTML = '<div class="narasi-placeholder"><span class="generating-dots">Generating</span></div>';
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        model:"claude-sonnet-4-20250514", max_tokens:1000,
+        messages:[{role:"user",content:AI_PROMPTS[id](d)}]
+      })
+    });
+    const json = await res.json();
+    const text = json.content?.[0]?.text || "Gagal generate.";
+    generatedContent[id] = text;
+    narasiEl.innerHTML = text.split('\n\n').map(p=>
+      `<p class="narasi-text" style="margin-bottom:8px">${p.replace(/\n/g,' ')}</p>`).join('');
+  } catch(e) {
+    narasiEl.innerHTML = `<div class="narasi-placeholder" style="color:#c0392b">Error: ${e.message}</div>`;
+  }
+
+  btn.disabled=false; btn.textContent='✨ Generate Konten AI';
+  renderSidebar();
+}
+
+// ── PREVIEW TOGGLE ───────────────────────────────────────────────────────────
+function toggleView() {
+  previewMode = !previewMode;
+  document.getElementById('mainLayout').style.display = previewMode?'none':'grid';
+  document.getElementById('previewPanel').style.display = previewMode?'block':'none';
+  if (previewMode) renderPreview();
+}
+
+function renderPreview() {
+  const d1 = formData[1]||{};
+  const panel = document.getElementById('previewPanel');
+  panel.innerHTML = `
+    <div style="text-align:center;margin-bottom:40px;padding:40px 24px;background:var(--navy);border-radius:16px;color:#fff;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:4px;color:var(--gold);margin-bottom:12px">MAKALAH IMPROVEMENT QCC</div>
+      <h1 style="font-family:'Playfair Display',serif;font-size:24px;margin:0 0 8px;">${d1.judul||'Judul Makalah'}</h1>
+      <p style="color:rgba(255,255,255,0.5);font-size:12px">${d1.area||'Departemen'} · ${d1.periode||'Periode'}</p>
+    </div>
+    ${STEPS.map(s=>{
+      const narasi = generatedContent[s.id];
+      return `<div style="margin-bottom:48px;padding-bottom:40px;border-bottom:1px solid #e8e2d5;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
+          <div style="width:40px;height:40px;border-radius:10px;background:${s.color}22;display:flex;align-items:center;justify-content:center;font-size:20px;">${s.icon}</div>
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:${s.color};letter-spacing:3px">BAB ${s.id}</div>
+            <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;">${s.title}</div>
+          </div>
+        </div>
+        ${narasi
+          ? narasi.split('\n\n').map(p=>`<p style="font-size:13px;line-height:2;color:#3d3020;text-align:justify;text-indent:2em;margin-bottom:10px;">${p.replace(/\n/g,' ')}</p>`).join('')
+          : `<p style="color:#ccc;font-style:italic;font-size:12px;">Konten belum di-generate.</p>`}
+      </div>`;
+    }).join('')}
+  `;
+}
+
+// ── PDF DOWNLOAD ─────────────────────────────────────────────────────────────
+async function downloadPDF() {
+  const overlay = document.getElementById('loadingOverlay');
+  const loadText = document.getElementById('loadingText');
+  const loadSub = document.getElementById('loadingSub');
+
+  overlay.classList.add('show');
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+
+  const PW = 210, PH = 297;
+  const ML = 20, MR = 20, MT = 28, MB = 20;
+  const CW = PW - ML - MR;
+
+  const NAVY_R=26, NAVY_G=39, NAVY_B=68;
+  const GOLD_R=201, GOLD_G=162, GOLD_B=39;
+
+  let pageNum = 0;
+
+  function newPage() {
+    if (pageNum > 0) doc.addPage();
+    pageNum++;
+    // Header
+    doc.setFillColor(NAVY_R, NAVY_G, NAVY_B);
+    doc.rect(0, 0, PW, 18, 'F');
+    doc.setFillColor(GOLD_R, GOLD_G, GOLD_B);
+    doc.rect(0, 0, 6, 18, 'F');
+    doc.setFontSize(8); doc.setFont('helvetica','bold');
+    doc.setTextColor(255,255,255);
+    doc.text('MAKALAH IMPROVEMENT QCC', 10, 11);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(7);
+    doc.text('7 Langkah Improvement', PW-MR, 11, {align:'right'});
+    // Footer
+    doc.setFontSize(8); doc.setTextColor(150,150,150);
+    doc.text(`Halaman ${pageNum}`, PW-MR, PH-8, {align:'right'});
+    doc.setTextColor(0,0,0);
+    return MT;
+  }
+
+  function checkY(y, needed=20) {
+    if (y + needed > PH - MB) { return newPage(); }
+    return y;
+  }
+
+  function wrapText(text, maxW, fontSize) {
+    doc.setFontSize(fontSize);
+    return doc.splitTextToSize(text, maxW);
+  }
+
+  function drawColorBar(y) {
+    const w = CW/7;
+    const HEX = ['#c9a227','#c0392b','#7b3fa0','#1a4fa0','#1a7a6e','#c05c1a','#1a7a9a'];
+    HEX.forEach((h,i)=>{
+      const r=parseInt(h.slice(1,3),16), g=parseInt(h.slice(3,5),16), b=parseInt(h.slice(5,7),16);
+      doc.setFillColor(r,g,b);
+      doc.rect(ML + i*w, y, w, 2, 'F');
+    });
+    return y + 2;
+  }
+
+  // ── COVER PAGE ──
+  let y = newPage();
+  y = drawColorBar(y);
+  y += 12;
+
+  doc.setFillColor(248,247,242);
+  doc.roundedRect(ML, y, CW, 80, 4, 4, 'F');
+  doc.setDrawColor(201,162,39);
+  doc.setLineWidth(0.5);
+  doc.roundedRect(ML, y, CW, 80, 4, 4, 'S');
+
+  y += 14;
+  doc.setFont('helvetica','bold'); doc.setFontSize(8);
+  doc.setTextColor(GOLD_R, GOLD_G, GOLD_B);
+  doc.text('MAKALAH IMPROVEMENT QCC', PW/2, y, {align:'center'});
+
+  y += 10;
+  doc.setFont('helvetica','bold'); doc.setFontSize(18);
+  doc.setTextColor(NAVY_R, NAVY_G, NAVY_B);
+  const d1 = formData[1]||{};
+  const titleLines = wrapText(d1.judul||'Judul Makalah Improvement', CW-20, 16);
+  doc.setFont('helvetica','bold'); doc.setFontSize(16);
+  titleLines.forEach(l => { doc.text(l, PW/2, y, {align:'center'}); y+=8; });
+
+  y += 6;
+  doc.setLineWidth(0.5); doc.setDrawColor(GOLD_R,GOLD_G,GOLD_B);
+  doc.line(ML+20, y, PW-MR-20, y); y += 8;
+
+  // Meta rows
+  const meta = [
+    ['Area / Departemen', d1.area||'-'],
+    ['Periode', d1.periode||'-'],
+    ['Baseline', d1.baseline||'-'],
+    ['Target (Initial Goal)', d1.goal||'-'],
+  ];
+  doc.setFontSize(9);
+  meta.forEach(([k,v])=>{
+    doc.setFont('helvetica','bold'); doc.setTextColor(80,60,20);
+    doc.text(k+':', ML+10, y);
+    doc.setFont('helvetica','normal'); doc.setTextColor(40,40,40);
+    doc.text(v, ML+65, y);
+    y += 6.5;
+  });
+
+  y += 16; y = drawColorBar(y);
+
+  // ── TABLE OF CONTENTS ──
+  y = newPage();
+  doc.setFont('helvetica','bold'); doc.setFontSize(16);
+  doc.setTextColor(NAVY_R,NAVY_G,NAVY_B);
+  doc.text('DAFTAR ISI', ML, y); y += 6;
+  doc.setLineWidth(0.8); doc.setDrawColor(GOLD_R,GOLD_G,GOLD_B);
+  doc.line(ML, y, PW-MR, y); y += 10;
+
+  STEPS.forEach(s=>{
+    y = checkY(y, 12);
+    const c = s.color;
+    const r=parseInt(c.slice(1,3),16), g=parseInt(c.slice(3,5),16), b=parseInt(c.slice(5,7),16);
+    doc.setFillColor(r,g,b,0.15);
+    doc.setFillColor(r+60, g+60, b+60);
+    doc.roundedRect(ML, y-4, 14, 8, 2, 2, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(8);
+    doc.setTextColor(255,255,255);
+    doc.text(`BAB ${s.id}`, ML+2, y+1);
+
+    doc.setFont('helvetica','normal'); doc.setFontSize(10);
+    doc.setTextColor(30,30,30);
+    doc.text(s.title, ML+18, y+1);
+    doc.text(`${s.id+1}`, PW-MR, y+1, {align:'right'});
+
+    doc.setDrawColor(220,215,200); doc.setLineWidth(0.2);
+    doc.line(ML, y+5, PW-MR, y+5);
+    y += 11;
+  });
+
+  // ── CHAPTERS ──
+  for (let i=0; i<STEPS.length; i++) {
+    const s = STEPS[i];
+    loadText.textContent = `Membuat BAB ${s.id}...`;
+    loadSub.textContent = s.title;
+
+    const sc = s.color;
+    const sr=parseInt(sc.slice(1,3),16), sg=parseInt(sc.slice(3,5),16), sb2=parseInt(sc.slice(5,7),16);
+
+    y = newPage();
+
+    // Chapter header band
+    doc.setFillColor(NAVY_R, NAVY_G, NAVY_B);
+    doc.rect(ML, y, CW, 18, 'F');
+    doc.setFillColor(sr, sg, sb2);
+    doc.rect(ML, y, 5, 18, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(8);
+    doc.setTextColor(sr+100, sg+100, sb2+100);
+    doc.text(`BAB ${s.id}`, ML+10, y+7);
+    doc.setFont('helvetica','bold'); doc.setFontSize(13);
+    doc.setTextColor(255,255,255);
+    doc.text(s.title, ML+10, y+14);
+    y += 24;
+
+    // Sub-labels (step 1)
+    if (s.subs) {
+      doc.setFontSize(8); doc.setFont('helvetica','italic');
+      doc.setTextColor(sr, sg, sb2);
+      doc.text(s.subs.join('   ·   '), ML, y);
+      y += 8;
+    }
+
+    // Chart (render to canvas, then embed)
+    loadSub.textContent = 'Membuat grafik...';
+    try {
+      // Draw chart to offscreen canvas
+      const oc = document.createElement('canvas');
+      oc.width=600; oc.height=280;
+      oc.style.position='absolute'; oc.style.left='-9999px';
+      document.body.appendChild(oc);
+      const tempCtx = oc.getContext('2d');
+      const d = formData[s.id]||{};
+
+      let tempChart = null;
+      if (s.chartType==='bar_gap') {
+        tempChart = new Chart(tempCtx,{type:'bar',data:{labels:['Baseline','Target'],datasets:[{data:[+d.baseline||18,+d.goal||0],backgroundColor:['#c0392b88','#1a7a6e88'],borderColor:['#c0392b','#1a7a6e'],borderWidth:2,borderRadius:6}]},options:{animation:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+      } else if (s.chartType==='pareto') {
+        const it=[{n:(d.p1||'P1').substring(0,14),v:+d.f1||42},{n:(d.p2||'P2').substring(0,14),v:+d.f2||31},{n:(d.p3||'P3').substring(0,14),v:+d.f3||18},{n:(d.p4||'P4').substring(0,14),v:+d.f4||9}].sort((a,b)=>b.v-a.v);
+        const tot=it.reduce((s,i)=>s+i.v,0); let c2=0;
+        const p2=it.map(i=>{c2+=i.v;return+(c2/tot*100).toFixed(1);});
+        tempChart = new Chart(tempCtx,{type:'bar',data:{labels:it.map(i=>i.n),datasets:[{type:'bar',label:'Frekuensi',data:it.map(i=>i.v),backgroundColor:'#c0392b88',borderColor:'#c0392b',borderWidth:2,yAxisID:'y'},{type:'line',label:'Kumulatif %',data:p2,borderColor:'#c9a227',backgroundColor:'transparent',borderWidth:2.5,pointRadius:5,yAxisID:'y2'}]},options:{animation:false,scales:{y:{beginAtZero:true},y2:{position:'right',max:110}}}});
+      } else if (s.chartType==='radar') {
+        tempChart = new Chart(tempCtx,{type:'radar',data:{labels:[d.d1||'D1',d.d2||'D2',d.d3||'D3'],datasets:[{label:'Korelasi',data:[+d.k1||94,+d.k2||82,+d.k3||67],borderColor:'#7b3fa0',backgroundColor:'#7b3fa033',borderWidth:2.5,pointBackgroundColor:'#7b3fa0'}]},options:{animation:false,scales:{r:{beginAtZero:true,max:100}}}});
+      } else if (s.chartType==='hbar') {
+        tempChart = new Chart(tempCtx,{type:'bar',data:{labels:[(d.a1||'Aksi 1').substring(0,20),(d.a2||'Aksi 2').substring(0,20),(d.a3||'Aksi 3').substring(0,20)],datasets:[{data:[+d.pr1||100,+d.pr2||100,+d.pr3||90],backgroundColor:'#1a4fa088',borderColor:'#1a4fa0',borderWidth:2,borderRadius:4}]},options:{animation:false,indexAxis:'y',scales:{x:{beginAtZero:true,max:110}}}});
+      } else if (s.chartType==='grouped_bar') {
+        tempChart = new Chart(tempCtx,{type:'bar',data:{labels:['Bulan 1','Bulan 2','Bulan 3'],datasets:[{label:'Sebelum',data:[+d.sb1||18,+d.sb2||16,+d.sb3||17],backgroundColor:'#c0392b88',borderColor:'#c0392b',borderWidth:2,borderRadius:4},{label:'Sesudah',data:[+d.ss1||9,+d.ss2||4,+d.ss3||0],backgroundColor:'#1a7a6e88',borderColor:'#1a7a6e',borderWidth:2,borderRadius:4}]},options:{animation:false,scales:{y:{beginAtZero:true}}}});
+      } else if (s.chartType==='pie') {
+        tempChart = new Chart(tempCtx,{type:'doughnut',data:{labels:[(d.sop1||'SOP 1').substring(0,16),(d.sop2||'SOP 2').substring(0,16),(d.sop3||'SOP 3').substring(0,16)],datasets:[{data:[+d.e1||96,+d.e2||91,+d.e3||85],backgroundColor:['#c9a227cc','#c05c1acc','#1a7a9acc'],borderWidth:2}]},options:{animation:false}});
+      } else if (s.chartType==='vbar_rank') {
+        tempChart = new Chart(tempCtx,{type:'bar',data:{labels:[(d.t1||'T1').substring(0,14),(d.t2||'T2').substring(0,14),(d.t3||'T3').substring(0,14)],datasets:[{data:[+d.s1||88,+d.s2||74,+d.s3||63],backgroundColor:['#1a7a9acc','#3b82f6aa','#7b3fa088'],borderWidth:2,borderRadius:6}]},options:{animation:false,scales:{y:{beginAtZero:true,max:110}}}});
+      }
+
+      await new Promise(r=>setTimeout(r,400));
+      const imgData = oc.toDataURL('image/png');
+      if (tempChart) tempChart.destroy();
+      document.body.removeChild(oc);
+
+      // Chart box
+      doc.setFillColor(248,247,242);
+      doc.setDrawColor(220,215,200); doc.setLineWidth(0.3);
+      doc.roundedRect(ML, y, CW, 52, 3, 3, 'FD');
+      doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+      doc.setTextColor(sr, sg, sb2);
+      doc.text('📈 GRAFIK STATISTIK', ML+4, y+6);
+      doc.addImage(imgData, 'PNG', ML+4, y+8, CW-8, 40);
+      y += 56;
+    } catch(e) {
+      console.warn('Chart error:', e);
+      y += 10;
+    }
+
+    y += 4;
+
+    // Narasi
+    loadSub.textContent = 'Menulis narasi...';
+    doc.setFont('helvetica','bold'); doc.setFontSize(8);
+    doc.setTextColor(sr, sg, sb2);
+    doc.text('NARASI', ML, y); y += 5;
+
+    const narasi = generatedContent[s.id] || 'Konten belum di-generate. Silakan klik "Generate Konten AI" terlebih dahulu.';
+    const paragraphs = narasi.split('\n\n').filter(p=>p.trim());
+    doc.setFont('helvetica','normal'); doc.setFontSize(10);
+    doc.setTextColor(40,30,10);
+
+    for (const para of paragraphs) {
+      const lines = doc.splitTextToSize('    ' + para.replace(/\n/g,' '), CW);
+      for (const line of lines) {
+        y = checkY(y, 6);
+        doc.text(line, ML, y);
+        y += 5.5;
+      }
+      y += 2;
+    }
+
+    // Bottom stripe
+    y = checkY(y, 5);
+    doc.setFillColor(sr, sg, sb2);
+    doc.rect(ML, y+4, CW, 1.5, 'F');
+  }
+
+  // ── PENUTUP ──
+  loadText.textContent = 'Finalisasi PDF...';
+  y = newPage();
+  doc.setFont('helvetica','bold'); doc.setFontSize(16);
+  doc.setTextColor(NAVY_R, NAVY_G, NAVY_B);
+  doc.text('KESIMPULAN & PENUTUP', ML, y); y += 5;
+  doc.setLineWidth(0.8); doc.setDrawColor(GOLD_R,GOLD_G,GOLD_B);
+  doc.line(ML, y, PW-MR, y); y += 10;
+
+  const kesimpulan = `Melalui penerapan 7 Langkah Improvement secara sistematis dan berbasis data, seluruh tahapan telah dilaksanakan mulai dari penentuan tema, analisis penyebab, pengujian penyebab dominan, rencana perbaikan, penelitian hasil, standarisasi, hingga penetapan tema berikutnya. Makalah ini merupakan bukti nyata komitmen tim terhadap budaya perbaikan berkesinambungan (Kaizen).`;
+
+  doc.setFont('helvetica','normal'); doc.setFontSize(10);
+  doc.setTextColor(40,30,10);
+  const kLines = doc.splitTextToSize('    '+kesimpulan, CW);
+  kLines.forEach(l=>{ y=checkY(y,6); doc.text(l,ML,y); y+=5.5; });
+
+  y += 12;
+  // Summary table
+  const rows = [
+    ['Langkah','Judul','Status'],
+    ...STEPS.map(s=>[`BAB ${s.id}`, s.title.substring(0,28), generatedContent[s.id]?'✓ Selesai':'- Belum'])
+  ];
+  const cws = [18, 110, 28];
+  rows.forEach((row,ri)=>{
+    y = checkY(y, 9);
+    if (ri===0) { doc.setFillColor(NAVY_R,NAVY_G,NAVY_B); doc.rect(ML,y-5,CW,9,'F'); }
+    else { doc.setFillColor(ri%2===0?248:255, ri%2===0?247:255, ri%2===0?242:255); doc.rect(ML,y-5,CW,9,'F'); }
+    let x = ML+2;
+    row.forEach((cell,ci)=>{
+      doc.setFont('helvetica', ri===0?'bold':'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(ri===0?255:40, ri===0?255:30, ri===0?255:10);
+      if (ci===2 && cell.includes('✓')) doc.setTextColor(26,122,110);
+      doc.text(cell, x, y);
+      x += cws[ci];
+    });
+    doc.setDrawColor(220,215,200); doc.setLineWidth(0.2);
+    doc.line(ML,y+4,PW-MR,y+4);
+    y += 9;
+  });
+
+  // Footer note
+  y += 12;
+  doc.setFont('helvetica','italic'); doc.setFontSize(8);
+  doc.setTextColor(GOLD_R, GOLD_G, GOLD_B);
+  doc.text('Dibuat dengan AI Ebook Builder · 7 Langkah Improvement', PW/2, y, {align:'center'});
+
+  // Save
+  const d1f = formData[1]||{};
+  const filename = (d1f.tema||'Makalah_Improvement').replace(/\s+/g,'_').substring(0,40) + '.pdf';
+  doc.save(filename);
+
+  overlay.classList.remove('show');
+  showToast(`✓ "${filename}" berhasil diunduh!`);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3500);
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+renderSidebar();
+renderStep(1);
+</script>
+</body>
+</html>
