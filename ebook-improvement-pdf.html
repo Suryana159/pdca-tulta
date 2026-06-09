@@ -255,7 +255,7 @@
 </div>
 <script>
   // Load saved API key
-  const savedKey = localStorage.getItem('pdca_apikey') || 'AQ.Ab8RN6K9v9o8xfQ5-T7JKwEDyiQRlXc4JoO30HmkYzoYxWcgOw';
+  const savedKey = localStorage.getItem('pdca_apikey') || '';
   window.GEMINI_API_KEY = savedKey;
   if (savedKey) {
     document.getElementById('apiKeyInput').value = savedKey;
@@ -268,6 +268,9 @@
     localStorage.setItem('pdca_apikey', key);
     document.getElementById('apiBar').style.display = 'none';
     document.getElementById('keyStatus').textContent = '✅ Tersimpan!';
+  }
+  function showApiBar() {
+    document.getElementById('apiBar').style.display = 'flex';
   }
 </script>
 
