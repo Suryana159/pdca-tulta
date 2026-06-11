@@ -261,17 +261,6 @@
     document.getElementById('apiKeyInput').value = savedKey;
     document.getElementById('apiBar').style.display = 'none';
   }
-  function saveKey() {
-    const key = document.getElementById('apiKeyInput').value.trim();
-    if (!key) return alert('API Key kosong!');
-    window.GEMINI_API_KEY = key;
-    localStorage.setItem('pdca_apikey', key);
-    document.getElementById('apiBar').style.display = 'none';
-    document.getElementById('keyStatus').textContent = '✅ Tersimpan!';
-  }
-  function showApiBar() {
-    document.getElementById('apiBar').style.display = 'flex';
-  }
 </script>
 
 <!-- TOP BAR -->
@@ -321,27 +310,25 @@
 // ── DATA ────────────────────────────────────────────────────────────────────
 const STEPS = [
   { id:1, icon:"🎯", color:"#c9a227", title:"Menentukan Tema & Judul",
-    subs:["1.1 Menentukan Tema","1.2 Menentukan Judul","1.3 Menentukan Initial Goal"],
-    chartType:"bar_gap",
+    subs:["1.1 Tema","1.2 Data Masalah","1.3 Penentuan Masalah","1.4 Diagram","1.5 Initial Goal"],
+    chartType:"step1_custom",
     fields:[
       {key:"tema",label:"Tema Improvement",placeholder:"Contoh: Menghilangkan Gangguan Belt Conveyor Putus",type:"text"},
-      {key:"judul",label:"Judul Makalah",placeholder:"Contoh: Upaya Menghilangkan Belt Putus dari 18 menjadi 0/bln",type:"text"},
-      {key:"baseline",label:"Baseline (Kondisi Awal)",placeholder:"Contoh: 18 kejadian/bulan",type:"text"},
-      {key:"goal",label:"Initial Goal (Target)",placeholder:"Contoh: 0 kejadian/bulan",type:"text"},
       {key:"area",label:"Area / Departemen",placeholder:"Contoh: Seksi Conveyor – Produksi",type:"text"},
       {key:"periode",label:"Periode",placeholder:"Contoh: Januari – Juni 2025",type:"text"},
+      {key:"masalah_utama",label:"Penentuan Masalah Utama",placeholder:"Berdasarkan data di atas, masalah utama yang dipilih adalah...",type:"textarea"},
+      {key:"baseline",label:"Kondisi Sebelum Perbaikan (Baseline)",placeholder:"Contoh: 18 kejadian/bulan",type:"text"},
+      {key:"target",label:"Target Perbaikan (Goal)",placeholder:"Contoh: 0 kejadian/bulan",type:"text"},
     ]},
   { id:2, icon:"🔍", color:"#c0392b", title:"Menganalisa Penyebab",
-    chartType:"pareto",
+    chartType:"ishikawa",
     fields:[
-      {key:"p1",label:"Penyebab 1",placeholder:"Contoh: Tegangan belt tidak standar",type:"text"},
-      {key:"f1",label:"Frekuensi 1 (angka)",placeholder:"42",type:"number"},
-      {key:"p2",label:"Penyebab 2",placeholder:"Contoh: Belt aus tidak diganti",type:"text"},
-      {key:"f2",label:"Frekuensi 2",placeholder:"31",type:"number"},
-      {key:"p3",label:"Penyebab 3",placeholder:"Contoh: Overload",type:"text"},
-      {key:"f3",label:"Frekuensi 3",placeholder:"18",type:"number"},
-      {key:"p4",label:"Penyebab 4",placeholder:"Contoh: Sambungan tidak presisi",type:"text"},
-      {key:"f4",label:"Frekuensi 4",placeholder:"9",type:"number"},
+      {key:"man",label:"Man (Manusia)",placeholder:"Contoh: Operator kurang terampil",type:"text"},
+      {key:"machine",label:"Machine (Mesin)",placeholder:"Contoh: Mesin tidak terkalibrasi",type:"text"},
+      {key:"method",label:"Method (Metode)",placeholder:"Contoh: SOP tidak diikuti",type:"text"},
+      {key:"material",label:"Material (Bahan)",placeholder:"Contoh: Kualitas bahan baku rendah",type:"text"},
+      {key:"measurement",label:"Measurement (Pengukuran)",placeholder:"Contoh: Alat ukur tidak akurat",type:"text"},
+      {key:"environment",label:"Environment (Lingkungan)",placeholder:"Contoh: Suhu ruangan tidak stabil",type:"text"},
     ]},
   { id:3, icon:"🧪", color:"#7b3fa0", title:"Menguji Penyebab Dominan",
     chartType:"radar",
@@ -426,7 +413,1285 @@ function renderSidebar() {
 }
 
 // ── RENDER STEP ─────────────────────────────────────────────────────────────
+
+// ============ CUSTOM STEP 1 ============
+function renderStep1() {
+  const d = formData[1] || {};
+  const temaItems = d.tema_items ? JSON.parse(d.tema_items) : [{masalah:'', frekuensi:''}];
+  const judulItems = d.judul_items ? JSON.parse(d.judul_items) : [{masalah:'', frekuensi:''}];
+  const items = temaItems; // For chart - use tema items by default
+  const chartMode = d.chartMode || 'bar';
+  const mainContent = document.getElementById('mainContent');
+
+  mainContent.innerHTML = `
+    <div class="download-bar">
+      <div class="download-icon">📥</div>
+      <div class="download-info">
+        <div class="download-title">Unduh Ebook sebagai PDF</div>
+        <div class="download-desc">Gratis · Tersimpan di perangkat Anda · Tidak perlu akun</div>
+      </div>
+      <button class="btn-dl-big" onclick="downloadPDF()">⬇ UNDUH PDF</button>
+    </div>
+
+    <div class="step-header" style="color:#c9a227;border-left-color:#c9a227;">
+      <div class="step-header-icon">🎯</div>
+      <div>
+        <div class="step-header-bab" style="color:#c9a227">BAB 1 · LANGKAH 1</div>
+        <div class="step-header-title">Menentukan Tema & Judul</div>
+        <div class="sub-tags">
+          <span class="sub-tag" style="color:#c9a227;border-color:#c9a22744;background:#c9a22711">1.1 Tema</span>
+          <span class="sub-tag" style="color:#c9a227;border-color:#c9a22744;background:#c9a22711">1.2 Data Masalah</span>
+          <span class="sub-tag" style="color:#c9a227;border-color:#c9a22744;background:#c9a22711">1.3 Penentuan Masalah</span>
+          <span class="sub-tag" style="color:#c9a227;border-color:#c9a22744;background:#c9a22711">1.4 Diagram</span>
+          <span class="sub-tag" style="color:#c9a227;border-color:#c9a22744;background:#c9a22711">1.5 Initial Goal</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <!-- LEFT: Form -->
+      <div class="panel">
+        <div class="panel-label">✏ Input Data</div>
+
+        <!-- Area & Periode -->
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <div class="form-group" style="flex:1;margin-bottom:0;">
+            <label class="form-label">Area / Departemen</label>
+            <input class="form-input" type="text" id="f1_area" placeholder="Seksi Conveyor – Produksi"
+              value="${d.area||''}" oninput="saveField(1,'area',this.value)"/>
+          </div>
+          <div class="form-group" style="flex:1;margin-bottom:0;">
+            <label class="form-label">Periode</label>
+            <input class="form-input" type="text" id="f1_periode" placeholder="Januari – Juni 2025"
+              value="${d.periode||''}" oninput="saveField(1,'periode',this.value)"/>
+          </div>
+        </div>
+
+        <!-- BLOK 1: Data Masalah Tema → Diagram Tema → Tema Improvement -->
+        <div style="background:#fffbf0;border:1.5px solid #f0d88a;border-radius:8px;padding:12px;margin-bottom:14px;">
+          <div style="font-size:12px;font-weight:700;color:#b8860b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">
+            📊 Blok 1 — Data Masalah Tema
+          </div>
+          <div style="font-size:11px;color:#888;margin-bottom:8px;">Input data masalah area kerja beserta frekuensinya</div>
+
+          <!-- Data masalah tema -->
+          <div id="masalahTemaList" style="margin-bottom:6px;">
+            ${temaItems.map((item,i) => `
+              <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center;">
+                <input class="form-input" type="text" placeholder="Nama masalah..." value="${item.masalah||''}"
+                  style="flex:2;" oninput="updateTemaItem(${i},'masalah',this.value)"/>
+                <input class="form-input" type="number" placeholder="Frekuensi" value="${item.frekuensi||''}"
+                  style="flex:1;" oninput="updateTemaItem(${i},'frekuensi',this.value)"/>
+                ${temaItems.length > 1 ? `<button onclick="removeTemaItem(${i})" style="background:#e74c3c;color:white;border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:14px;">×</button>` : ''}
+              </div>
+            `).join('')}
+          </div>
+          <button onclick="addTemaItem()" style="background:#fff;border:1.5px dashed #c9a227;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px;color:#b8860b;width:100%;margin-bottom:10px;">
+            ➕ Tambah Data Masalah Tema
+          </button>
+
+          <!-- Pilihan diagram tema -->
+          <div style="font-size:11px;font-weight:700;color:#b8860b;margin-bottom:6px;">📈 Pilihan Diagram Tema</div>
+          <div style="display:flex;gap:8px;margin-bottom:10px;">
+            <button onclick="setChartMode(1,'tema_bar')" style="flex:1;padding:6px;border-radius:6px;border:2px solid ${chartMode==='tema_bar'||chartMode==='bar'?'#c9a227':'#ddd'};background:${chartMode==='tema_bar'||chartMode==='bar'?'#fff4d6':'white'};cursor:pointer;font-size:11px;font-weight:600;color:${chartMode==='tema_bar'||chartMode==='bar'?'#b8860b':'#666'};">
+              📊 Diagram Batang
+            </button>
+            <button onclick="setChartMode(1,'tema_pareto')" style="flex:1;padding:6px;border-radius:6px;border:2px solid ${chartMode==='tema_pareto'?'#c9a227':'#ddd'};background:${chartMode==='tema_pareto'?'#fff4d6':'white'};cursor:pointer;font-size:11px;font-weight:600;color:${chartMode==='tema_pareto'?'#b8860b':'#666'};">
+              📉 Diagram Pareto
+            </button>
+          </div>
+
+          <!-- Tema Improvement -->
+          <div style="font-size:11px;font-weight:700;color:#b8860b;margin-bottom:6px;">🎯 Tema Improvement (dipilih dari data di atas)</div>
+          <input class="form-input" type="text" id="f1_tema" placeholder="Contoh: Menghilangkan Gangguan Belt Conveyor Putus"
+            value="${d.tema||''}" oninput="saveField(1,'tema',this.value)"/>
+        </div>
+
+        <!-- BLOK 2: Data Masalah Judul → Diagram Judul → Judul Improvement -->
+        <div style="background:#f0f8ff;border:1.5px solid #90c8e8;border-radius:8px;padding:12px;margin-bottom:14px;">
+          <div style="font-size:12px;font-weight:700;color:#1a6899;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">
+            📋 Blok 2 — Data Masalah Judul (Breakdown dari Tema)
+          </div>
+          <div style="font-size:11px;color:#888;margin-bottom:8px;">Data masalah spesifik sebagai breakdown dari tema yang dipilih</div>
+
+          <!-- Data masalah judul -->
+          <div id="masalahJudulList" style="margin-bottom:6px;">
+            ${judulItems.map((item,i) => `
+              <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center;">
+                <input class="form-input" type="text" placeholder="Nama masalah judul..." value="${item.masalah||''}"
+                  style="flex:2;" oninput="updateJudulItem(${i},'masalah',this.value)"/>
+                <input class="form-input" type="number" placeholder="Frekuensi" value="${item.frekuensi||''}"
+                  style="flex:1;" oninput="updateJudulItem(${i},'frekuensi',this.value)"/>
+                ${judulItems.length > 1 ? `<button onclick="removeJudulItem(${i})" style="background:#e74c3c;color:white;border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:14px;">×</button>` : ''}
+              </div>
+            `).join('')}
+          </div>
+          <button onclick="addJudulItem()" style="background:#fff;border:1.5px dashed #1a6899;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px;color:#1a6899;width:100%;margin-bottom:10px;">
+            ➕ Tambah Data Masalah Judul
+          </button>
+
+          <!-- Pilihan diagram judul -->
+          <div style="font-size:11px;font-weight:700;color:#1a6899;margin-bottom:6px;">📈 Pilihan Diagram Judul</div>
+          <div style="display:flex;gap:8px;margin-bottom:10px;">
+            <button onclick="setChartMode(1,'judul_bar')" style="flex:1;padding:6px;border-radius:6px;border:2px solid ${chartMode==='judul_bar'?'#1a6899':'#ddd'};background:${chartMode==='judul_bar'?'#ddeeff':'white'};cursor:pointer;font-size:11px;font-weight:600;color:${chartMode==='judul_bar'?'#1a6899':'#666'};">
+              📊 Diagram Batang
+            </button>
+            <button onclick="setChartMode(1,'judul_pareto')" style="flex:1;padding:6px;border-radius:6px;border:2px solid ${chartMode==='judul_pareto'?'#1a6899':'#ddd'};background:${chartMode==='judul_pareto'?'#ddeeff':'white'};cursor:pointer;font-size:11px;font-weight:600;color:${chartMode==='judul_pareto'?'#1a6899':'#666'};">
+              📉 Diagram Pareto
+            </button>
+          </div>
+
+          <!-- Judul Improvement -->
+          <div style="font-size:11px;font-weight:700;color:#1a6899;margin-bottom:6px;">📝 Judul Improvement (dipilih dari data di atas)</div>
+          <input class="form-input" type="text" id="f1_judul" placeholder="Contoh: Upaya Menghilangkan Belt Putus dari 18 menjadi 0/bln"
+            value="${d.judul||''}" oninput="saveField(1,'judul',this.value)"/>
+        </div>
+
+        <!-- Pilihan Diagram -->
+        <div style="margin:8px 0 6px;font-size:12px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.5px;">
+          📈 Pilihan Diagram
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <button onclick="setChartMode(1,'bar')" style="flex:1;padding:7px;border-radius:6px;border:2px solid ${chartMode==='bar'?'#c9a227':'#ddd'};background:${chartMode==='bar'?'#fff4d6':'white'};cursor:pointer;font-size:12px;font-weight:600;color:${chartMode==='bar'?'#c9a227':'#666'};">
+            📊 Diagram Batang
+          </button>
+          <button onclick="setChartMode(1,'pareto')" style="flex:1;padding:7px;border-radius:6px;border:2px solid ${chartMode==='pareto'?'#c9a227':'#ddd'};background:${chartMode==='pareto'?'#fff4d6':'white'};cursor:pointer;font-size:12px;font-weight:600;color:${chartMode==='pareto'?'#c9a227':'#666'};">
+            📉 Diagram Pareto
+          </button>
+        </div>
+
+        <!-- Initial Goal -->
+        <div style="margin:8px 0 6px;font-size:12px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.5px;">
+          🎯 Initial Goal
+        </div>
+        <div style="display:flex;gap:8px;">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Kondisi Sebelum (Baseline)</label>
+            <input class="form-input" type="text" id="f1_baseline" placeholder="Contoh: 18 kali/bulan"
+              value="${d.baseline||''}" oninput="saveField(1,'baseline',this.value);renderStep1Chart()"/>
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Target Perbaikan (Goal)</label>
+            <input class="form-input" type="text" id="f1_target" placeholder="Contoh: 0 kali/bulan"
+              value="${d.target||''}" oninput="saveField(1,'target',this.value);renderStep1Chart()"/>
+          </div>
+        </div>
+
+        <!-- Generate AI -->
+        <button class="btn-generate" style="background:#c9a227" onclick="generateContent(1)" id="btnGen_1">
+          ✨ Generate Konten AI
+        </button>
+      </div>
+
+      <!-- RIGHT: Charts + Narasi -->
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <!-- Chart Tema -->
+        <div class="panel" style="border-left:3px solid #c9a227;">
+          <div class="panel-label" style="color:#b8860b;">📊 Diagram Tema</div>
+          <div style="height:180px;position:relative;">
+            <canvas id="chart_tema"></canvas>
+          </div>
+        </div>
+        <!-- Chart Judul -->
+        <div class="panel" style="border-left:3px solid #1a6899;">
+          <div class="panel-label" style="color:#1a6899;">📊 Diagram Judul</div>
+          <div style="height:180px;position:relative;">
+            <canvas id="chart_judul"></canvas>
+          </div>
+        </div>
+        <!-- Narasi AI -->
+        <div class="panel">
+          <div class="panel-label">🤖 Narasi AI</div>
+          <div id="narasi_1" class="narasi-placeholder">
+            ${d.narasi_1 ? `<div style="font-size:13px;line-height:1.7;">${d.narasi_1.replace(/\n/g,'<br>')}</div>` : 'Klik Generate untuk membuat narasi otomatis'}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <div style="display:flex;justify-content:space-between;margin-top:16px;">
+      <button class="btn-nav" onclick="renderStep(0)">← LANGKAH 0</button>
+      <button class="btn-nav btn-nav-next" onclick="renderStep(2)">LANGKAH 2 →</button>
+    </div>
+  `;
+
+  // Render chart
+  setTimeout(() => renderStep1Chart(), 50);
+}
+
+// Tema items helpers
+function getTemaItems() {
+  const d = formData[1] || {};
+  return d.tema_items ? JSON.parse(d.tema_items) : [{masalah:'',frekuensi:''}];
+}
+function saveTemaItems(items) { saveField(1, 'tema_items', JSON.stringify(items)); }
+function addTemaItem() { const items = getTemaItems(); items.push({masalah:'',frekuensi:''}); saveTemaItems(items); renderStep1(); }
+function removeTemaItem(idx) { const items = getTemaItems(); items.splice(idx,1); saveTemaItems(items); renderStep1(); }
+function updateTemaItem(idx, key, val) { const items = getTemaItems(); items[idx][key]=val; saveTemaItems(items); setTimeout(()=>renderStep1Chart(),100); }
+
+// Judul items helpers
+function getJudulItems() {
+  const d = formData[1] || {};
+  return d.judul_items ? JSON.parse(d.judul_items) : [{masalah:'',frekuensi:''}];
+}
+function saveJudulItems(items) { saveField(1, 'judul_items', JSON.stringify(items)); }
+function addJudulItem() { const items = getJudulItems(); items.push({masalah:'',frekuensi:''}); saveJudulItems(items); renderStep1(); }
+function removeJudulItem(idx) { const items = getJudulItems(); items.splice(idx,1); saveJudulItems(items); renderStep1(); }
+function updateJudulItem(idx, key, val) { const items = getJudulItems(); items[idx][key]=val; saveJudulItems(items); setTimeout(()=>renderStep1Chart(),100); }
+
+// Legacy - keep for compatibility
+function getMasalahItems() { return getTemaItems(); }
+function saveMasalahItems(items) { saveTemaItems(items); }
+function addMasalahItem() { addTemaItem(); }
+function removeMasalahItem(idx) { removeTemaItem(idx); }
+function updateMasalahItem(idx, key, val) { updateTemaItem(idx, key, val); }
+
+function setChartMode(id, mode) {
+  saveField(id, 'chartMode', mode);
+  setTimeout(()=>renderStep1Chart(), 50);
+  // Update button styles without full re-render
+  renderStep1();
+}
+
+function renderChartByMode(canvasId, items, mode, colorMain) {
+  const cv = document.getElementById(canvasId);
+  if (!cv || items.length === 0) return;
+  const chartKey = '_chart_' + canvasId;
+  if (window[chartKey]) window[chartKey].destroy();
+  const isPareto = mode.includes('pareto');
+  if (!isPareto) {
+    window[chartKey] = new Chart(cv, {
+      type:'bar',
+      data:{
+        labels: items.map(i=>i.masalah.substring(0,15)),
+        datasets:[{ label:'Frekuensi', data:items.map(i=>+i.frekuensi||0),
+          backgroundColor: colorMain+'cc', borderColor:colorMain, borderWidth:1.5 }]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}
+    });
+  } else {
+    const sorted = [...items].sort((a,b)=>(+b.frekuensi||0)-(+a.frekuensi||0));
+    const total = sorted.reduce((s,i)=>s+(+i.frekuensi||0),0);
+    let cum=0;
+    const cumPct = sorted.map(i=>{cum+=(+i.frekuensi||0);return total?+(cum/total*100).toFixed(1):0;});
+    window[chartKey] = new Chart(cv, {
+      type:'bar',
+      data:{
+        labels:sorted.map(i=>i.masalah.substring(0,15)),
+        datasets:[
+          {type:'bar',label:'Frekuensi',data:sorted.map(i=>+i.frekuensi||0),backgroundColor:colorMain+'cc',yAxisID:'y'},
+          {type:'line',label:'Kumulatif %',data:cumPct,borderColor:'#e74c3c',backgroundColor:'transparent',tension:0.3,pointRadius:4,yAxisID:'y2'}
+        ]
+      },
+      options:{responsive:true,maintainAspectRatio:false,
+        scales:{y:{beginAtZero:true,position:'left'},y2:{beginAtZero:true,max:100,position:'right',grid:{drawOnChartArea:false}}}}
+    });
+  }
+}
+
+function renderStep1Chart() {
+  const d = formData[1] || {};
+  const chartMode = d.chartMode || 'tema_bar';
+  const temaItems = getTemaItems().filter(i=>i.masalah&&i.frekuensi);
+  const judulItems = getJudulItems().filter(i=>i.masalah&&i.frekuensi);
+
+  // Render tema chart
+  if (temaItems.length > 0) {
+    renderChartByMode('chart_tema', temaItems, chartMode.startsWith('tema')?chartMode:'tema_bar', '#c9a227');
+  }
+  // Render judul chart
+  if (judulItems.length > 0) {
+    renderChartByMode('chart_judul', judulItems, chartMode.startsWith('judul')?chartMode:'judul_bar', '#1a6899');
+  }
+}
+
+
+// ============ CUSTOM STEP 2 — ISHIKAWA ============
+const ISHIKAWA_CATS = [
+  {key:'man',      label:'Man',         color:'#e74c3c', icon:'👤'},
+  {key:'machine',  label:'Machine',     color:'#3498db', icon:'⚙️'},
+  {key:'method',   label:'Method',      color:'#2ecc71', icon:'📋'},
+  {key:'material', label:'Material',    color:'#f39c12', icon:'📦'},
+  {key:'measurement', label:'Measurement', color:'#9b59b6', icon:'📏'},
+  {key:'environment', label:'Environment', color:'#1abc9c', icon:'🌿'},
+];
+
+function getIshikawaItems(cat) {
+  const d = formData[2] || {};
+  const key = 'ishi_' + cat;
+  return d[key] ? JSON.parse(d[key]) : [''];
+}
+
+function saveIshikawaItems(cat, items) {
+  saveField(2, 'ishi_' + cat, JSON.stringify(items));
+}
+
+function addIshikawaItem(cat) {
+  const items = getIshikawaItems(cat);
+  items.push('');
+  saveIshikawaItems(cat, items);
+  renderStep2();
+}
+
+function removeIshikawaItem(cat, idx) {
+  const items = getIshikawaItems(cat);
+  items.splice(idx, 1);
+  saveIshikawaItems(cat, items);
+  renderStep2();
+}
+
+function updateIshikawaItem(cat, idx, val) {
+  const items = getIshikawaItems(cat);
+  items[idx] = val;
+  saveIshikawaItems(cat, items);
+  setTimeout(() => renderIshikawaChart(), 100);
+}
+
+
+// ============ ROOT CAUSE HELPERS ============
+function getRootItems(cat) {
+  const d = formData[2] || {};
+  const key = 'root_' + cat;
+  return d[key] ? JSON.parse(d[key]) : [''];
+}
+
+function saveRootItems(cat, items) {
+  saveField(2, 'root_' + cat, JSON.stringify(items));
+}
+
+function addRootItem(cat) {
+  const items = getRootItems(cat);
+  items.push('');
+  saveRootItems(cat, items);
+  renderStep2();
+}
+
+function removeRootItem(cat, idx) {
+  const items = getRootItems(cat);
+  items.splice(idx, 1);
+  saveRootItems(cat, items);
+  renderStep2();
+}
+
+function updateRootItem(cat, idx, val) {
+  const items = getRootItems(cat);
+  items[idx] = val;
+  saveRootItems(cat, items);
+  setTimeout(() => renderRootPieChart(), 100);
+}
+
+function renderRootPieChart() {
+  const cv = document.getElementById('root_pie_chart');
+  if (!cv) return;
+
+  const labels = [];
+  const counts = [];
+  const colors = [];
+
+  ISHIKAWA_CATS.forEach(cat => {
+    const items = getRootItems(cat.key).filter(v => v.trim());
+    if (items.length > 0) {
+      labels.push(cat.label + ' (' + items.length + ')');
+      counts.push(items.length);
+      colors.push(cat.color);
+    }
+  });
+
+  if (counts.length === 0) return;
+
+  if (window._rootPieChart) window._rootPieChart.destroy();
+  window._rootPieChart = new Chart(cv, {
+    type: 'pie',
+    data: {
+      labels,
+      datasets: [{
+        data: counts,
+        backgroundColor: colors.map(c => c + 'cc'),
+        borderColor: colors,
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { font: { size: 10 }, boxWidth: 12, padding: 8 }
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const cat = ISHIKAWA_CATS[ctx.dataIndex];
+              const items = getRootItems(cat.key).filter(v=>v.trim());
+              return [` ${ctx.label}`, ...items.map(i => '  • ' + i.substring(0,25))];
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderStep2() {
+  const d = formData[2] || {};
+  const mainContent = document.getElementById('mainContent');
+
+  const catsHTML = ISHIKAWA_CATS.map(cat => {
+    const items = getIshikawaItems(cat.key);
+    return `
+      <div style="background:#fff;border:1.5px solid ${cat.color}33;border-radius:8px;padding:10px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div style="font-size:12px;font-weight:700;color:${cat.color};">${cat.icon} ${cat.label}</div>
+          <button onclick="addIshikawaItem('${cat.key}')"
+            style="background:${cat.color};color:white;border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;">+</button>
+        </div>
+        ${items.map((val, i) => `
+          <div style="display:flex;gap:6px;margin-bottom:5px;align-items:center;">
+            <input class="form-input" type="text"
+              placeholder="Penyebab ${i+1}..."
+              value="${val||''}"
+              style="flex:1;"
+              oninput="updateIshikawaItem('${cat.key}',${i},this.value)"/>
+            ${items.length > 1 ? `<button onclick="removeIshikawaItem('${cat.key}',${i})"
+              style="background:#e74c3c;color:white;border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:14px;">×</button>` : ''}
+          </div>
+        `).join('')}
+      </div>`;
+  }).join('');
+
+  mainContent.innerHTML = `
+    <div class="download-bar">
+      <div class="download-icon">📥</div>
+      <div class="download-info">
+        <div class="download-title">Unduh Ebook sebagai PDF</div>
+        <div class="download-desc">Gratis · Tersimpan di perangkat Anda · Tidak perlu akun</div>
+      </div>
+      <button class="btn-dl-big" onclick="downloadPDF()">⬇ UNDUH PDF</button>
+    </div>
+
+    <div class="step-header" style="color:#c0392b;border-left-color:#c0392b;">
+      <div class="step-header-icon">🔍</div>
+      <div>
+        <div class="step-header-bab" style="color:#c0392b">BAB 2 · LANGKAH 2</div>
+        <div class="step-header-title">Menganalisa Penyebab</div>
+        <div class="sub-tags">
+          <span class="sub-tag" style="color:#c0392b;border-color:#c0392b44;background:#c0392b11">Diagram Ishikawa (Fishbone)</span>
+          <span class="sub-tag" style="color:#c0392b;border-color:#c0392b44;background:#c0392b11">Analisis 6M</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <!-- LEFT: Form -->
+      <div class="panel">
+        <div class="panel-label">✏ Input Penyebab (6M)</div>
+        <div style="font-size:11px;color:#888;margin-bottom:10px;">Klik <b>+</b> untuk menambah penyebab pada setiap kategori</div>
+        ${catsHTML}
+        <!-- Akar Penyebab per Kategori -->
+        <div style="margin-top:12px;">
+          <div style="font-size:12px;font-weight:700;color:#c0392b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">
+            🌱 Akar Penyebab per Kategori
+          </div>
+          <div style="font-size:11px;color:#888;margin-bottom:10px;">Input akar penyebab dari masing-masing kategori Ishikawa</div>
+          ${ISHIKAWA_CATS.map(cat => {
+            const rootItems = getRootItems(cat.key);
+            return `
+            <div style="background:#fff;border:1.5px solid ${cat.color}33;border-radius:8px;padding:10px;margin-bottom:8px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <div style="font-size:11px;font-weight:700;color:${cat.color};">${cat.icon} Akar — ${cat.label}</div>
+                <button onclick="addRootItem('${cat.key}')"
+                  style="background:${cat.color};color:white;border:none;border-radius:6px;width:24px;height:24px;cursor:pointer;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;">+</button>
+              </div>
+              ${rootItems.map((item, i) => `
+                <div style="display:flex;gap:6px;margin-bottom:5px;align-items:center;">
+                  <input class="form-input" type="text"
+                    placeholder="Akar penyebab ${i+1}..."
+                    value="${item||''}"
+                    style="flex:1;font-size:12px;"
+                    oninput="updateRootItem('${cat.key}',${i},this.value)"/>
+                  ${rootItems.length > 1 ? `<button onclick="removeRootItem('${cat.key}',${i})"
+                    style="background:#e74c3c;color:white;border:none;border-radius:6px;width:24px;height:24px;cursor:pointer;font-size:13px;">×</button>` : ''}
+                </div>
+              `).join('')}
+            </div>`;
+          }).join('')}
+        </div>
+
+        <button class="btn-generate" style="background:#c0392b;" onclick="generateContent(2)" id="btnGen_2">
+          ✨ Generate Konten AI
+        </button>
+      </div>
+
+      <!-- RIGHT: Ishikawa Chart + Pie + Narasi -->
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="panel" style="border-left:3px solid #c0392b;">
+          <div class="panel-label" style="color:#c0392b;">🐟 Diagram Ishikawa</div>
+          <div id="ishikawa_svg" style="width:100%;min-height:220px;"></div>
+        </div>
+        <div class="panel" style="border-left:3px solid #9b59b6;">
+          <div class="panel-label" style="color:#9b59b6;">🥧 Diagram Pie — Akar Penyebab</div>
+          <div style="height:220px;position:relative;">
+            <canvas id="root_pie_chart"></canvas>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-label">🤖 Narasi AI</div>
+          <div id="narasi_2" class="narasi-placeholder">
+            ${d.narasi_2 ? `<div style="font-size:13px;line-height:1.7;">${d.narasi_2.replace(/\n/g,'<br>')}</div>` : 'Klik Generate untuk membuat narasi otomatis'}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <div style="display:flex;justify-content:space-between;margin-top:16px;">
+      <button class="btn-nav" onclick="renderStep(1)">← LANGKAH 1</button>
+      <button class="btn-nav btn-nav-next" onclick="renderStep(3)">LANGKAH 3 →</button>
+    </div>
+  `;
+
+  setTimeout(() => { renderIshikawaChart(); renderRootPieChart(); }, 50);
+}
+
+function renderIshikawaChart() {
+  const svgDiv = document.getElementById('ishikawa_svg');
+  if (!svgDiv) return;
+
+  const allCats = ISHIKAWA_CATS.map(cat => ({
+    ...cat,
+    items: getIshikawaItems(cat.key).filter(v => v.trim())
+  }));
+
+  const top3 = allCats.slice(0,3);
+  const bot3 = allCats.slice(3,6);
+
+  const makeBranch = (cat, x, isTop) => {
+    const y1 = isTop ? 40 : 220;
+    const y2 = 130;
+    const items = cat.items.slice(0,3);
+    return `
+      <line x1="${x}" y1="${y1}" x2="${x+25}" y2="${y2}" stroke="${cat.color}" stroke-width="2"/>
+      <rect x="${x-50}" y="${isTop?18:218}" width="100" height="22" rx="4" fill="${cat.color}"/>
+      <text x="${x}" y="${isTop?33:233}" text-anchor="middle" fill="white" font-size="9" font-weight="bold">${cat.label}</text>
+      ${items.map((item, i) => `
+        <text x="${x + (isTop?-15:15)}" y="${isTop ? 65+i*14 : 195-i*14}" text-anchor="${isTop?'end':'start'}" fill="#444" font-size="8">${item.substring(0,18)}</text>
+      `).join('')}
+    `;
+  };
+
+  const svg = `<svg viewBox="0 0 520 270" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+    <rect width="520" height="270" fill="#fafaf8" rx="8"/>
+    <!-- Spine -->
+    <line x1="50" y1="130" x2="430" y2="130" stroke="#555" stroke-width="3"/>
+    <!-- Arrow head -->
+    <polygon points="430,123 445,130 430,137" fill="#555"/>
+    <!-- Effect box -->
+    <rect x="445" y="112" width="68" height="36" rx="6" fill="#c0392b"/>
+    <text x="479" y="128" text-anchor="middle" fill="white" font-size="9" font-weight="bold">MASALAH</text>
+    <text x="479" y="141" text-anchor="middle" fill="white" font-size="8">UTAMA</text>
+    <!-- Top branches -->
+    ${top3.map((cat, i) => makeBranch(cat, 110 + i*110, true)).join('')}
+    <!-- Bottom branches -->
+    ${bot3.map((cat, i) => makeBranch(cat, 110 + i*110, false)).join('')}
+  </svg>`;
+
+  svgDiv.innerHTML = svg;
+}
+
+
+// ============ CUSTOM STEP 3 — SCATTER DIAGRAM ============
+function getStep3Items() {
+  const d = formData[3] || {};
+  return d.scatter_items ? JSON.parse(d.scatter_items) : [
+    {penyebab:'', korelasi:'', frekuensi:''}
+  ];
+}
+
+function saveStep3Items(items) {
+  saveField(3, 'scatter_items', JSON.stringify(items));
+}
+
+function addStep3Item() {
+  const items = getStep3Items();
+  items.push({penyebab:'', korelasi:'', frekuensi:''});
+  saveStep3Items(items);
+  renderStep3();
+}
+
+function removeStep3Item(idx) {
+  const items = getStep3Items();
+  items.splice(idx, 1);
+  saveStep3Items(items);
+  renderStep3();
+}
+
+function updateStep3Item(idx, key, val) {
+  const items = getStep3Items();
+  items[idx][key] = val;
+  saveStep3Items(items);
+  setTimeout(() => renderScatterChart(), 100);
+}
+
+function renderStep3() {
+  const d = formData[3] || {};
+  const items = getStep3Items();
+  const mainContent = document.getElementById('mainContent');
+
+  mainContent.innerHTML = `
+    <div class="download-bar">
+      <div class="download-icon">📥</div>
+      <div class="download-info">
+        <div class="download-title">Unduh Ebook sebagai PDF</div>
+        <div class="download-desc">Gratis · Tersimpan di perangkat Anda · Tidak perlu akun</div>
+      </div>
+      <button class="btn-dl-big" onclick="downloadPDF()">⬇ UNDUH PDF</button>
+    </div>
+
+    <div class="step-header" style="color:#7b3fa0;border-left-color:#7b3fa0;">
+      <div class="step-header-icon">🧪</div>
+      <div>
+        <div class="step-header-bab" style="color:#7b3fa0">BAB 3 · LANGKAH 3</div>
+        <div class="step-header-title">Menguji Penyebab Dominan</div>
+        <div class="sub-tags">
+          <span class="sub-tag" style="color:#7b3fa0;border-color:#7b3fa044;background:#7b3fa011">Scatter Diagram</span>
+          <span class="sub-tag" style="color:#7b3fa0;border-color:#7b3fa044;background:#7b3fa011">Korelasi Penyebab</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <!-- LEFT: Form -->
+      <div class="panel">
+        <div class="panel-label">✏ Data Penyebab & Korelasi</div>
+        <div style="font-size:11px;color:#888;margin-bottom:10px;">
+          Masukkan penyebab dominan, nilai korelasi (0-100), dan frekuensi kejadian. Klik <b>+</b> untuk tambah data.
+        </div>
+
+        <!-- Table header -->
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 28px;gap:6px;margin-bottom:4px;padding:0 4px;">
+          <div style="font-size:10px;font-weight:700;color:#7b3fa0;text-transform:uppercase;">Penyebab Dominan</div>
+          <div style="font-size:10px;font-weight:700;color:#7b3fa0;text-transform:uppercase;">Korelasi (0-100)</div>
+          <div style="font-size:10px;font-weight:700;color:#7b3fa0;text-transform:uppercase;">Frekuensi</div>
+          <div></div>
+        </div>
+
+        <!-- Data rows -->
+        <div id="step3List">
+          ${items.map((item, i) => `
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 28px;gap:6px;margin-bottom:6px;align-items:center;">
+              <input class="form-input" type="text" placeholder="Nama penyebab..."
+                value="${item.penyebab||''}" style="font-size:12px;"
+                oninput="updateStep3Item(${i},'penyebab',this.value)"/>
+              <input class="form-input" type="number" placeholder="0-100" min="0" max="100"
+                value="${item.korelasi||''}" style="font-size:12px;"
+                oninput="updateStep3Item(${i},'korelasi',this.value)"/>
+              <input class="form-input" type="number" placeholder="Frekuensi"
+                value="${item.frekuensi||''}" style="font-size:12px;"
+                oninput="updateStep3Item(${i},'frekuensi',this.value)"/>
+              ${items.length > 1 ? `
+                <button onclick="removeStep3Item(${i})"
+                  style="background:#e74c3c;color:white;border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:13px;">×</button>
+              ` : '<div></div>'}
+            </div>
+          `).join('')}
+        </div>
+
+        <!-- Add button -->
+        <button onclick="addStep3Item()"
+          style="background:#7b3fa0;color:white;border:none;border-radius:6px;padding:7px 16px;cursor:pointer;font-size:13px;width:100%;margin:6px 0 14px;display:flex;align-items:center;justify-content:center;gap:6px;">
+          ➕ Tambah Penyebab
+        </button>
+
+        <!-- Metode Uji -->
+        <div class="form-group">
+          <label class="form-label">Metode Uji</label>
+          <input class="form-input" type="text" id="f3_metode"
+            placeholder="Contoh: Scatter Diagram & Pearson Correlation"
+            value="${d.metode||''}"
+            oninput="saveField(3,'metode',this.value)"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kesimpulan Uji</label>
+          <textarea class="form-input" id="f3_kesimpulan"
+            placeholder="Penyebab dominan yang terbukti berkorelasi tinggi adalah..."
+            style="min-height:70px;resize:vertical;"
+            oninput="saveField(3,'kesimpulan',this.value)">${d.kesimpulan||''}</textarea>
+        </div>
+
+        <button class="btn-generate" style="background:#7b3fa0;" onclick="generateContent(3)" id="btnGen_3">
+          ✨ Generate Konten AI
+        </button>
+      </div>
+
+      <!-- RIGHT: Scatter Chart + Narasi -->
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="panel" style="border-left:3px solid #7b3fa0;">
+          <div class="panel-label" style="color:#7b3fa0;">🔵 Scatter Diagram — Korelasi Penyebab</div>
+          <div style="font-size:10px;color:#888;margin-bottom:6px;">Sumbu X: Frekuensi · Sumbu Y: Nilai Korelasi · Ukuran: Tingkat korelasi</div>
+          <div style="height:260px;position:relative;">
+            <canvas id="scatter_chart"></canvas>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-label">🤖 Narasi AI</div>
+          <div id="narasi_3" class="narasi-placeholder">
+            ${d.narasi_3 ? `<div style="font-size:13px;line-height:1.7;">${d.narasi_3.replace(/\n/g,'<br>')}</div>` : 'Klik Generate untuk membuat narasi otomatis'}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <div style="display:flex;justify-content:space-between;margin-top:16px;">
+      <button class="btn-nav" onclick="renderStep(2)">← LANGKAH 2</button>
+      <button class="btn-nav btn-nav-next" onclick="renderStep(4)">LANGKAH 4 →</button>
+    </div>
+  `;
+
+  setTimeout(() => renderScatterChart(), 50);
+}
+
+function renderScatterChart() {
+  const cv = document.getElementById('scatter_chart');
+  if (!cv) return;
+
+  const items = getStep3Items().filter(i => i.penyebab && i.korelasi);
+  if (items.length === 0) return;
+
+  if (window._scatterChart) window._scatterChart.destroy();
+
+  const colors = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#c0392b'];
+
+  // Scatter data: x = frekuensi, y = korelasi
+  const datasets = items.map((item, i) => ({
+    label: item.penyebab.substring(0, 20),
+    data: [{ x: +item.frekuensi || i+1, y: +item.korelasi || 0 }],
+    backgroundColor: colors[i % colors.length] + 'aa',
+    borderColor: colors[i % colors.length],
+    borderWidth: 2,
+    pointRadius: Math.max(8, (+item.korelasi || 50) / 8),
+    pointHoverRadius: Math.max(10, (+item.korelasi || 50) / 6),
+  }));
+
+  window._scatterChart = new Chart(cv, {
+    type: 'scatter',
+    data: { datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { font: { size: 10 }, boxWidth: 12, padding: 6 }
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const item = items[ctx.datasetIndex];
+              return [
+                item.penyebab,
+                `Korelasi: ${item.korelasi}`,
+                `Frekuensi: ${item.frekuensi||'-'}`
+              ];
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Frekuensi Kejadian', font: { size: 11 } },
+          beginAtZero: true
+        },
+        y: {
+          title: { display: true, text: 'Nilai Korelasi (0-100)', font: { size: 11 } },
+          beginAtZero: true,
+          max: 100
+        }
+      }
+    }
+  });
+}
+
+
+// ============ CUSTOM STEP 4 — 5W2H + PELAKSANAAN + INTERMEDIATE TARGET ============
+
+const W5H2_FIELDS = [
+  {key:'why',    label:'Why',      icon:'❓', placeholder:'Mengapa perlu dilakukan?',      color:'#e74c3c'},
+  {key:'what',   label:'What',     icon:'📋', placeholder:'Apa yang akan dilakukan?',      color:'#3498db'},
+  {key:'who',    label:'Who',      icon:'👤', placeholder:'Siapa yang bertanggung jawab?', color:'#2ecc71'},
+  {key:'where',  label:'Where',    icon:'📍', placeholder:'Di mana dilaksanakan?',         color:'#f39c12'},
+  {key:'when',   label:'When',     icon:'📅', placeholder:'Kapan dilaksanakan?',           color:'#9b59b6'},
+  {key:'how',    label:'How',      icon:'⚙️', placeholder:'Bagaimana caranya?',            color:'#1abc9c'},
+  {key:'howmuch',label:'How Much', icon:'💰', placeholder:'Berapa biaya/sumber daya?',     color:'#e67e22'},
+];
+
+function getStep4RootItems() {
+  const d = formData[4] || {};
+  return d.root_items ? JSON.parse(d.root_items) : [{akar:''}];
+}
+
+function saveStep4RootItems(items) {
+  saveField(4, 'root_items', JSON.stringify(items));
+}
+
+function addStep4RootItem() {
+  const items = getStep4RootItems();
+  items.push({akar:''});
+  saveStep4RootItems(items);
+  renderStep4();
+}
+
+function removeStep4RootItem(idx) {
+  const items = getStep4RootItems();
+  items.splice(idx, 1);
+  saveStep4RootItems(items);
+  renderStep4();
+}
+
+function updateStep4RootItem(idx, val) {
+  const items = getStep4RootItems();
+  items[idx].akar = val;
+  saveStep4RootItems(items);
+}
+
+function getW5H2Items(field, rootIdx) {
+  const d = formData[4] || {};
+  const key = field + '_' + rootIdx;
+  return d[key] ? JSON.parse(d[key]) : [''];
+}
+
+function saveW5H2Items(field, rootIdx, items) {
+  saveField(4, field + '_' + rootIdx, JSON.stringify(items));
+}
+
+function addW5H2Item(field, rootIdx) {
+  const items = getW5H2Items(field, rootIdx);
+  items.push('');
+  saveW5H2Items(field, rootIdx, items);
+  renderStep4();
+}
+
+function removeW5H2Item(field, rootIdx, itemIdx) {
+  const items = getW5H2Items(field, rootIdx);
+  items.splice(itemIdx, 1);
+  saveW5H2Items(field, rootIdx, items);
+  renderStep4();
+}
+
+function updateW5H2Item(field, rootIdx, itemIdx, val) {
+  const items = getW5H2Items(field, rootIdx);
+  items[itemIdx] = val;
+  saveW5H2Items(field, rootIdx, items);
+}
+
+// Pelaksanaan helpers
+function getPelaksanaanItems() {
+  const d = formData[4] || {};
+  return d.pelaksanaan_items ? JSON.parse(d.pelaksanaan_items) : [{aksi:'', pic:'', progress:'', status:''}];
+}
+
+function savePelaksanaanItems(items) {
+  saveField(4, 'pelaksanaan_items', JSON.stringify(items));
+}
+
+function addPelaksanaanItem() {
+  const items = getPelaksanaanItems();
+  items.push({aksi:'', pic:'', progress:'', status:''});
+  savePelaksanaanItems(items);
+  renderStep4();
+}
+
+function removePelaksanaanItem(idx) {
+  const items = getPelaksanaanItems();
+  items.splice(idx, 1);
+  savePelaksanaanItems(items);
+  renderStep4();
+}
+
+function updatePelaksanaanItem(idx, key, val) {
+  const items = getPelaksanaanItems();
+  items[idx][key] = val;
+  savePelaksanaanItems(items);
+  setTimeout(() => renderProgressChart(), 100);
+}
+
+// Intermediate target helpers
+function getTargetItems() {
+  const d = formData[4] || {};
+  return d.target_items ? JSON.parse(d.target_items) : [{periode:'', target:'', realisasi:''}];
+}
+
+function saveTargetItems(items) {
+  saveField(4, 'target_items', JSON.stringify(items));
+}
+
+function addTargetItem() {
+  const items = getTargetItems();
+  items.push({periode:'', target:'', realisasi:''});
+  saveTargetItems(items);
+  renderStep4();
+}
+
+function removeTargetItem(idx) {
+  const items = getTargetItems();
+  items.splice(idx, 1);
+  saveTargetItems(items);
+  renderStep4();
+}
+
+function updateTargetItem(idx, key, val) {
+  const items = getTargetItems();
+  items[idx][key] = val;
+  saveTargetItems(items);
+  setTimeout(() => renderProgressChart(), 100);
+}
+
+function renderProgressChart() {
+  const cv = document.getElementById('progress_chart');
+  if (!cv) return;
+  const items = getPelaksanaanItems().filter(i => i.aksi);
+  if (items.length === 0) return;
+  if (window._progressChart) window._progressChart.destroy();
+  window._progressChart = new Chart(cv, {
+    type: 'bar',
+    data: {
+      labels: items.map(i => i.aksi.substring(0,15)),
+      datasets: [{
+        label: 'Progress (%)',
+        data: items.map(i => +i.progress || 0),
+        backgroundColor: items.map(i => (+i.progress||0) >= 100 ? '#2ecc71cc' : (+i.progress||0) >= 50 ? '#f39c12cc' : '#e74c3ccc'),
+        borderColor: items.map(i => (+i.progress||0) >= 100 ? '#2ecc71' : (+i.progress||0) >= 50 ? '#f39c12' : '#e74c3c'),
+        borderWidth: 1.5
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true, max: 100 } }
+    }
+  });
+}
+
+function renderTargetChart() {
+  const cv = document.getElementById('target_chart');
+  if (!cv) return;
+  const items = getTargetItems().filter(i => i.periode);
+  if (items.length === 0) return;
+  if (window._targetChart) window._targetChart.destroy();
+  window._targetChart = new Chart(cv, {
+    type: 'line',
+    data: {
+      labels: items.map(i => i.periode),
+      datasets: [
+        { label: 'Target', data: items.map(i => +i.target||0), borderColor:'#3498db', backgroundColor:'#3498db33', tension:0.3, pointRadius:5 },
+        { label: 'Realisasi', data: items.map(i => +i.realisasi||0), borderColor:'#2ecc71', backgroundColor:'#2ecc7133', tension:0.3, pointRadius:5 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position:'bottom', labels:{ font:{size:10} } } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+}
+
+function renderStep4() {
+  const d = formData[4] || {};
+  const rootItems = getStep4RootItems();
+  const pelaksanaanItems = getPelaksanaanItems();
+  const targetItems = getTargetItems();
+  const mainContent = document.getElementById('mainContent');
+
+  // Build w5h2HTML placeholder - will be populated via DOM
+  const w5h2HTML = '<div id="w5h2_container"></div>';
+
+  mainContent.innerHTML = `
+    <div class="download-bar">
+      <div class="download-icon">📥</div>
+      <div class="download-info">
+        <div class="download-title">Unduh Ebook sebagai PDF</div>
+        <div class="download-desc">Gratis · Tersimpan di perangkat Anda · Tidak perlu akun</div>
+      </div>
+      <button class="btn-dl-big" onclick="downloadPDF()">⬇ UNDUH PDF</button>
+    </div>
+
+    <div class="step-header" style="color:#1a4fa0;border-left-color:#1a4fa0;">
+      <div class="step-header-icon">🛠️</div>
+      <div>
+        <div class="step-header-bab" style="color:#1a4fa0">BAB 4 · LANGKAH 4</div>
+        <div class="step-header-title">Rencana & Melaksanakan Perbaikan</div>
+        <div class="sub-tags">
+          <span class="sub-tag" style="color:#1a4fa0;border-color:#1a4fa044;background:#1a4fa011">5W2H</span>
+          <span class="sub-tag" style="color:#1a4fa0;border-color:#1a4fa044;background:#1a4fa011">Pelaksanaan</span>
+          <span class="sub-tag" style="color:#1a4fa0;border-color:#1a4fa044;background:#1a4fa011">Intermediate Target</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- BAGIAN 1: RENCANA PERBAIKAN 5W2H -->
+    <div style="background:white;border:1.5px solid #1a4fa033;border-radius:10px;padding:1rem;margin-bottom:1rem;">
+      <div style="font-size:13px;font-weight:700;color:#1a4fa0;margin-bottom:4px;">📝 A. Rencana Perbaikan (5W2H)</div>
+      <div style="font-size:11px;color:#888;margin-bottom:12px;">Isi rencana perbaikan untuk setiap akar penyebab menggunakan metode 5W2H</div>
+
+      ${w5h2HTML}
+
+      <button onclick="addStep4RootItem()"
+        style="background:#1a4fa0;color:white;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;font-size:13px;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;">
+        ➕ Tambah Akar Penyebab
+      </button>
+    </div>
+
+    <!-- BAGIAN 2: PELAKSANAAN PERBAIKAN -->
+    <div style="background:white;border:1.5px solid #2ecc7133;border-radius:10px;padding:1rem;margin-bottom:1rem;">
+      <div style="font-size:13px;font-weight:700;color:#27ae60;margin-bottom:4px;">⚙️ B. Pelaksanaan Perbaikan</div>
+      <div style="font-size:11px;color:#888;margin-bottom:10px;">Progress pelaksanaan setiap aksi perbaikan</div>
+
+      <!-- Table header -->
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 28px;gap:6px;margin-bottom:4px;padding:0 4px;">
+        <div style="font-size:10px;font-weight:700;color:#27ae60;text-transform:uppercase;">Aksi Perbaikan</div>
+        <div style="font-size:10px;font-weight:700;color:#27ae60;text-transform:uppercase;">PIC</div>
+        <div style="font-size:10px;font-weight:700;color:#27ae60;text-transform:uppercase;">Progress (%)</div>
+        <div style="font-size:10px;font-weight:700;color:#27ae60;text-transform:uppercase;">Status</div>
+        <div></div>
+      </div>
+
+      <div id="pelaksanaan_rows"></div>
+
+      <button onclick="addPelaksanaanItem()"
+        style="background:#27ae60;color:white;border:none;border-radius:6px;padding:7px 16px;cursor:pointer;font-size:13px;width:100%;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:6px;">
+        ➕ Tambah Aksi Perbaikan
+      </button>
+
+      <!-- Progress Chart -->
+      <div style="height:200px;position:relative;margin-top:14px;">
+        <canvas id="progress_chart"></canvas>
+      </div>
+    </div>
+
+    <!-- BAGIAN 3: INTERMEDIATE TARGET -->
+    <div style="background:white;border:1.5px solid #9b59b633;border-radius:10px;padding:1rem;margin-bottom:1rem;">
+      <div style="font-size:13px;font-weight:700;color:#8e44ad;margin-bottom:4px;">🎯 C. Penetapan Intermediate Target</div>
+      <div style="font-size:11px;color:#888;margin-bottom:10px;">Target bertahap yang ingin dicapai pada setiap periode</div>
+
+      <!-- Table header -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 28px;gap:6px;margin-bottom:4px;padding:0 4px;">
+        <div style="font-size:10px;font-weight:700;color:#8e44ad;text-transform:uppercase;">Periode</div>
+        <div style="font-size:10px;font-weight:700;color:#8e44ad;text-transform:uppercase;">Target</div>
+        <div style="font-size:10px;font-weight:700;color:#8e44ad;text-transform:uppercase;">Realisasi</div>
+        <div></div>
+      </div>
+
+      <div id="target_rows"></div>
+
+      <button onclick="addTargetItem()"
+        style="background:#8e44ad;color:white;border:none;border-radius:6px;padding:7px 16px;cursor:pointer;font-size:13px;width:100%;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:6px;">
+        ➕ Tambah Periode Target
+      </button>
+
+      <!-- Target Line Chart -->
+      <div style="height:200px;position:relative;margin-top:14px;">
+        <canvas id="target_chart"></canvas>
+      </div>
+    </div>
+
+    <!-- Generate AI -->
+    <button class="btn-generate" style="background:#1a4fa0;" onclick="generateContent(4)" id="btnGen_4">
+      ✨ Generate Konten AI
+    </button>
+    <div id="narasi_4" class="narasi-placeholder" style="margin-top:12px;">
+      ${d.narasi_4 ? `<div style="font-size:13px;line-height:1.7;">${d.narasi_4.replace(/\n/g,'<br>')}</div>` : 'Klik Generate untuk membuat narasi otomatis'}
+    </div>
+
+    <!-- Nav -->
+    <div style="display:flex;justify-content:space-between;margin-top:16px;">
+      <button class="btn-nav" onclick="renderStep(3)">← LANGKAH 3</button>
+      <button class="btn-nav btn-nav-next" onclick="renderStep(5)">LANGKAH 5 →</button>
+    </div>
+  `;
+
+  setTimeout(() => {
+    // Render W5H2 rows using DOM (avoids string escaping issues)
+    const w5h2Container = document.getElementById('w5h2_container');
+    if (w5h2Container) {
+      w5h2Container.innerHTML = '';
+      rootItems.forEach(function(root, ri) {
+        const rootDiv = document.createElement('div');
+        rootDiv.style.cssText = 'background:#f8faff;border:1.5px solid #1a4fa033;border-radius:8px;padding:12px;margin-bottom:12px;';
+        
+        // Header
+        const hdr = document.createElement('div');
+        hdr.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;';
+        const title = document.createElement('div');
+        title.style.cssText = 'font-size:12px;font-weight:700;color:#1a4fa0;';
+        title.textContent = '📌 Akar Penyebab ' + (ri+1);
+        hdr.appendChild(title);
+        if (rootItems.length > 1) {
+          const delBtn = document.createElement('button');
+          delBtn.textContent = '× Hapus';
+          delBtn.style.cssText = 'background:#e74c3c;color:white;border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-size:12px;';
+          delBtn.addEventListener('click', function(){ removeStep4RootItem(ri); });
+          hdr.appendChild(delBtn);
+        }
+        rootDiv.appendChild(hdr);
+        
+        // Akar input
+        const akarInp = document.createElement('input');
+        akarInp.className = 'form-input'; akarInp.type = 'text';
+        akarInp.placeholder = 'Nama akar penyebab...';
+        akarInp.value = root.akar || '';
+        akarInp.style.cssText = 'margin-bottom:10px;font-weight:600;width:100%;';
+        akarInp.addEventListener('input', function(){ updateStep4RootItem(ri, this.value); });
+        rootDiv.appendChild(akarInp);
+        
+        // W5H2 fields
+        W5H2_FIELDS.forEach(function(f) {
+          const wItems = getW5H2Items(f.key, ri);
+          const fieldDiv = document.createElement('div');
+          fieldDiv.style.marginBottom = '8px';
+          
+          const fieldHdr = document.createElement('div');
+          fieldHdr.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;';
+          
+          const fieldLabel = document.createElement('div');
+          fieldLabel.style.cssText = 'font-size:11px;font-weight:700;color:' + f.color + ';';
+          fieldLabel.textContent = f.icon + ' ' + f.label;
+          
+          const addBtn = document.createElement('button');
+          addBtn.textContent = '+';
+          addBtn.style.cssText = 'background:' + f.color + ';color:white;border:none;border-radius:6px;width:22px;height:22px;cursor:pointer;font-size:14px;';
+          addBtn.addEventListener('click', (function(fkey, rIdx){ return function(){ addW5H2Item(fkey, rIdx); }; })(f.key, ri));
+          
+          fieldHdr.appendChild(fieldLabel);
+          fieldHdr.appendChild(addBtn);
+          fieldDiv.appendChild(fieldHdr);
+          
+          wItems.forEach(function(val, wi) {
+            const itemRow = document.createElement('div');
+            itemRow.style.cssText = 'display:flex;gap:5px;margin-bottom:4px;align-items:center;';
+            
+            const inp = document.createElement('input');
+            inp.className = 'form-input'; inp.type = 'text';
+            inp.placeholder = f.placeholder; inp.value = val || '';
+            inp.style.cssText = 'flex:1;font-size:12px;';
+            inp.addEventListener('input', (function(fkey, rIdx, wIdx){ return function(){ updateW5H2Item(fkey, rIdx, wIdx, this.value); }; })(f.key, ri, wi));
+            itemRow.appendChild(inp);
+            
+            if (wItems.length > 1) {
+              const delBtn = document.createElement('button');
+              delBtn.textContent = '×';
+              delBtn.style.cssText = 'background:#e74c3c;color:white;border:none;border-radius:6px;width:22px;height:22px;cursor:pointer;font-size:12px;';
+              delBtn.addEventListener('click', (function(fkey, rIdx, wIdx){ return function(){ removeW5H2Item(fkey, rIdx, wIdx); }; })(f.key, ri, wi));
+              itemRow.appendChild(delBtn);
+            }
+            fieldDiv.appendChild(itemRow);
+          });
+          rootDiv.appendChild(fieldDiv);
+        });
+        w5h2Container.appendChild(rootDiv);
+      });
+    }
+    
+        // Render pelaksanaan rows using DOM
+    const pelDiv = document.getElementById('pelaksanaan_rows');
+    if (pelDiv) {
+      pelDiv.innerHTML = '';
+      pelaksanaanItems.forEach(function(item, i) {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:grid;grid-template-columns:2fr 1fr 1fr 1fr 28px;gap:6px;margin-bottom:6px;align-items:center;';
+        
+        const inp1 = document.createElement('input');
+        inp1.className = 'form-input'; inp1.type = 'text'; inp1.placeholder = 'Aksi perbaikan...';
+        inp1.value = item.aksi||''; inp1.style.fontSize = '12px';
+        inp1.addEventListener('input', function(){ updatePelaksanaanItem(i,'aksi',this.value); });
+        
+        const inp2 = document.createElement('input');
+        inp2.className = 'form-input'; inp2.type = 'text'; inp2.placeholder = 'PIC...';
+        inp2.value = item.pic||''; inp2.style.fontSize = '12px';
+        inp2.addEventListener('input', function(){ updatePelaksanaanItem(i,'pic',this.value); });
+        
+        const inp3 = document.createElement('input');
+        inp3.className = 'form-input'; inp3.type = 'number'; inp3.placeholder = '0-100';
+        inp3.min = '0'; inp3.max = '100'; inp3.value = item.progress||''; inp3.style.fontSize = '12px';
+        inp3.addEventListener('input', function(){ updatePelaksanaanItem(i,'progress',this.value); });
+        
+        const sel = document.createElement('select');
+        sel.className = 'form-input'; sel.style.cssText = 'font-size:11px;padding:6px;';
+        [['Selesai','Selesai'],['Proses','Proses'],['Belum','Belum']].forEach(function(opt) {
+          const o = document.createElement('option');
+          o.value = opt[0]; o.textContent = opt[1];
+          if (item.status === opt[0]) o.selected = true;
+          sel.appendChild(o);
+        });
+        sel.addEventListener('change', function(){ updatePelaksanaanItem(i,'status',this.value); });
+        
+        const delCell = document.createElement('div');
+        if (pelaksanaanItems.length > 1) {
+          const btn = document.createElement('button');
+          btn.textContent = 'x'; btn.style.cssText = 'background:#e74c3c;color:white;border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:13px;';
+          btn.addEventListener('click', function(){ removePelaksanaanItem(i); });
+          delCell.appendChild(btn);
+        }
+        
+        row.appendChild(inp1); row.appendChild(inp2); row.appendChild(inp3);
+        row.appendChild(sel); row.appendChild(delCell);
+        pelDiv.appendChild(row);
+      });
+    }
+    
+    // Render target rows using DOM
+    const tgtDiv = document.getElementById('target_rows');
+    if (tgtDiv) {
+      tgtDiv.innerHTML = '';
+      targetItems.forEach(function(item, i) {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr 28px;gap:6px;margin-bottom:6px;align-items:center;';
+        
+        const inp1 = document.createElement('input');
+        inp1.className = 'form-input'; inp1.type = 'text'; inp1.placeholder = 'Contoh: Minggu 1';
+        inp1.value = item.periode||''; inp1.style.fontSize = '12px';
+        inp1.addEventListener('input', function(){ updateTargetItem(i,'periode',this.value); });
+        
+        const inp2 = document.createElement('input');
+        inp2.className = 'form-input'; inp2.type = 'number'; inp2.placeholder = 'Nilai target';
+        inp2.value = item.target||''; inp2.style.fontSize = '12px';
+        inp2.addEventListener('input', function(){ updateTargetItem(i,'target',this.value); });
+        
+        const inp3 = document.createElement('input');
+        inp3.className = 'form-input'; inp3.type = 'number'; inp3.placeholder = 'Nilai realisasi';
+        inp3.value = item.realisasi||''; inp3.style.fontSize = '12px';
+        inp3.addEventListener('input', function(){ updateTargetItem(i,'realisasi',this.value); });
+        
+        const delCell = document.createElement('div');
+        if (targetItems.length > 1) {
+          const btn = document.createElement('button');
+          btn.textContent = 'x'; btn.style.cssText = 'background:#e74c3c;color:white;border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:13px;';
+          btn.addEventListener('click', function(){ removeTargetItem(i); });
+          delCell.appendChild(btn);
+        }
+        
+        row.appendChild(inp1); row.appendChild(inp2); row.appendChild(inp3); row.appendChild(delCell);
+        tgtDiv.appendChild(row);
+      });
+    }
+    
+    renderProgressChart();
+    renderTargetChart();
+  }, 50);
+}
+
 function renderStep(id) {
+  // Custom render for step 1
+  if (id === 1) { renderStep1(); return; }
+  // Custom render for step 2
+  if (id === 2) { renderStep2(); return; }
+  // Custom render for step 3
+  if (id === 3) { renderStep3(); return; }
+  // Custom render for step 4
+  if (id === 4) { renderStep4(); return; }
+
   const s = STEPS.find(x=>x.id===id);
   const d = formData[id]||{};
   const content = document.getElementById('mainContent');
@@ -543,6 +1808,52 @@ function drawChart(id) {
         responsive:true, maintainAspectRatio:false}});
   }
 
+  else if (s.chartType === 'ishikawa') {
+    // Render Fishbone/Ishikawa diagram as SVG
+    const categories = [
+      {key:'man', label:'Man', color:'#e74c3c'},
+      {key:'machine', label:'Machine', color:'#3498db'},
+      {key:'method', label:'Method', color:'#2ecc71'},
+      {key:'material', label:'Material', color:'#f39c12'},
+      {key:'measurement', label:'Measurement', color:'#9b59b6'},
+      {key:'environment', label:'Environment', color:'#1abc9c'},
+    ];
+    const svg = `<svg viewBox="0 0 500 260" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;">
+      <rect width="500" height="260" fill="#fafaf8"/>
+      <!-- Spine -->
+      <line x1="60" y1="130" x2="420" y2="130" stroke="#333" stroke-width="2.5"/>
+      <!-- Head -->
+      <rect x="420" y="110" width="70" height="40" rx="6" fill="#c0392b"/>
+      <text x="455" y="135" text-anchor="middle" fill="white" font-size="11" font-weight="bold">MASALAH</text>
+      <!-- Top branches: Man, Machine, Method -->
+      ${[
+        {x:130,label:'Man',val:d.man||'-',color:'#e74c3c'},
+        {x:240,label:'Machine',val:d.machine||'-',color:'#3498db'},
+        {x:350,label:'Method',val:d.method||'-',color:'#2ecc71'},
+      ].map(b=>`
+        <line x1="${b.x}" y1="60" x2="${b.x+30}" y2="130" stroke="${b.color}" stroke-width="1.5"/>
+        <rect x="${b.x-45}" y="40" width="90" height="22" rx="4" fill="${b.color}"/>
+        <text x="${b.x}" y="55" text-anchor="middle" fill="white" font-size="9" font-weight="bold">${b.label}</text>
+        <text x="${b.x}" y="78" text-anchor="middle" fill="#333" font-size="7">${b.val.substring(0,20)}</text>
+      `).join('')}
+      <!-- Bottom branches: Material, Measurement, Environment -->
+      ${[
+        {x:130,label:'Material',val:d.material||'-',color:'#f39c12'},
+        {x:240,label:'Measurement',val:d.measurement||'-',color:'#9b59b6'},
+        {x:350,label:'Environment',val:d.environment||'-',color:'#1abc9c'},
+      ].map(b=>`
+        <line x1="${b.x}" y1="200" x2="${b.x+30}" y2="130" stroke="${b.color}" stroke-width="1.5"/>
+        <rect x="${b.x-45}" y="198" width="90" height="22" rx="4" fill="${b.color}"/>
+        <text x="${b.x}" y="213" text-anchor="middle" fill="white" font-size="9" font-weight="bold">${b.label}</text>
+        <text x="${b.x}" y="232" text-anchor="middle" fill="#333" font-size="7">${b.val.substring(0,20)}</text>
+      `).join('')}
+    </svg>`;
+    cv.style.display='none';
+    let svgDiv = document.getElementById('svg_'+sid);
+    if (!svgDiv) { svgDiv = document.createElement('div'); svgDiv.id='svg_'+sid; svgDiv.style.cssText='width:100%;height:250px;'; cv.parentNode.insertBefore(svgDiv,cv); }
+    svgDiv.innerHTML = svg;
+  }
+  
   else if (s.chartType === 'pareto') {
     const items = [
       {label:(d.p1||'P1').substring(0,18), v:+d.f1||42},
@@ -636,10 +1947,40 @@ function drawChart(id) {
 
 // ── AI GENERATION ────────────────────────────────────────────────────────────
 const AI_PROMPTS = {
-  1: d=>`Tulis narasi profesional BAB 1 makalah improvement. Tema: "${d.tema||'Improvement'}". Judul: "${d.judul||'-'}". Area: ${d.area||'-'}. Periode: ${d.periode||'-'}. Baseline: ${d.baseline||'-'}. Target: ${d.goal||'-'}. Sertakan 3 sub-pembahasan: 1.1 Penentuan Tema, 1.2 Penentuan Judul, 1.3 Initial Goal. Bahasa Indonesia formal, 200-250 kata, tanpa heading.`,
-  2: d=>`Tulis narasi BAB 2 "Menganalisa Penyebab" makalah improvement. Penyebab: (1) ${d.p1||'P1'}: ${d.f1||'?'}x, (2) ${d.p2||'P2'}: ${d.f2||'?'}x, (3) ${d.p3||'P3'}: ${d.f3||'?'}x, (4) ${d.p4||'P4'}: ${d.f4||'?'}x. Jelaskan fishbone, pareto, penyebab dominan. Bahasa Indonesia formal, 200-250 kata.`,
-  3: d=>`Tulis narasi BAB 3 "Menguji Penyebab Dominan". Penyebab dominan: ${d.d1||'D1'} (korelasi ${d.k1||'?'}%), ${d.d2||'D2'} (${d.k2||'?'}%), ${d.d3||'D3'} (${d.k3||'?'}%). Metode: ${d.metode||'Scatter Diagram'}. Bahasa Indonesia formal, 200-250 kata.`,
-  4: d=>`Tulis narasi BAB 4 "Membuat Rencana & Melaksanakan Perbaikan". Aksi: (1) ${d.a1||'Aksi 1'} ${d.pr1||'?'}%, (2) ${d.a2||'Aksi 2'} ${d.pr2||'?'}%, (3) ${d.a3||'Aksi 3'} ${d.pr3||'?'}%. PIC: ${d.pic||'-'}. Bahasa Indonesia formal, 200-250 kata.`,
+  1: d=>{
+    const temaItems = d.tema_items ? JSON.parse(d.tema_items) : [];
+    const judulItems = d.judul_items ? JSON.parse(d.judul_items) : [];
+    const temaStr = temaItems.map((i,n)=>`${n+1}. ${i.masalah}: ${i.frekuensi}x`).join(', ');
+    const judulStr = judulItems.map((i,n)=>`${n+1}. ${i.masalah}: ${i.frekuensi}x`).join(', ');
+    return `Tulis narasi profesional BAB 1 makalah improvement. Tema: "${d.tema||'Improvement'}". Judul: "${d.judul||'-'}". Area: ${d.area||'-'}. Periode: ${d.periode||'-'}. Data masalah tema: ${temaStr||'-'}. Data masalah judul: ${judulStr||'-'}. Baseline: ${d.baseline||'-'}. Target: ${d.target||'-'}. Sertakan sub-pembahasan: 1.1 Data & Penentuan Tema, 1.2 Breakdown Data & Penentuan Judul, 1.3 Initial Goal. Bahasa Indonesia formal, 200-250 kata, tanpa heading.`;
+  },
+  2: d=>{
+    const cats = ['man','machine','method','material','measurement','environment'];
+    const labels = {man:'Man',machine:'Machine',method:'Method',material:'Material',measurement:'Measurement',environment:'Environment'}
+    const ishiStr = cats.map(c => {
+      const items = d['ishi_'+c] ? JSON.parse(d['ishi_'+c]).filter(v=>v) : [];
+      return items.length ? labels[c]+': '+items.join(', ') : '';
+    }).filter(Boolean).join('. ');
+    const rootStr = cats.map(c => {
+      const items = d['root_'+c] ? JSON.parse(d['root_'+c]).filter(v=>v) : [];
+      return items.length ? 'Akar '+labels[c]+': '+items.join(', ') : '';
+    }).filter(Boolean).join('. ');
+    return `Tulis narasi BAB 2 "Menganalisa Penyebab" makalah improvement menggunakan Diagram Ishikawa (Fishbone) dan analisis akar penyebab. Penyebab 6M: ${ishiStr||'belum diisi'}. Akar penyebab: ${rootStr||'belum diisi'}. Jelaskan analisis diagram Ishikawa, uraikan akar penyebab dari masing-masing kategori, serta identifikasi akar masalah paling dominan berdasarkan data pie chart. Bahasa Indonesia formal, 200-250 kata.`;
+  },
+  3: d=>{
+    const items = d.scatter_items ? JSON.parse(d.scatter_items).filter(i=>i.penyebab) : [];
+    const dataStr = items.map((i,n)=>`${n+1}. ${i.penyebab}: korelasi ${i.korelasi||'-'}, frekuensi ${i.frekuensi||'-'}`).join('. ');
+    return `Tulis narasi BAB 3 "Menguji Penyebab Dominan" makalah improvement menggunakan Scatter Diagram. Data penyebab dan korelasi: ${dataStr||'belum diisi'}. Metode uji: ${d.metode||'Scatter Diagram'}. Kesimpulan: ${d.kesimpulan||'-'}. Jelaskan pengujian korelasi menggunakan scatter diagram, identifikasi penyebab dominan berdasarkan nilai korelasi tertinggi, dan simpulkan penyebab yang perlu ditangani. Bahasa Indonesia formal, 200-250 kata.`;
+  },
+  4: d=>{
+    const roots = d.root_items ? JSON.parse(d.root_items) : [];
+    const rootStr = roots.map((r,i)=>`${i+1}. ${r.akar||'-'}`).join(', ');
+    const pel = d.pelaksanaan_items ? JSON.parse(d.pelaksanaan_items) : [];
+    const pelStr = pel.map((p,i)=>`${i+1}. ${p.aksi||'-'} (${p.progress||0}% - ${p.status||'-'})`).join(', ');
+    const tgt = d.target_items ? JSON.parse(d.target_items) : [];
+    const tgtStr = tgt.map(t=>`${t.periode}: target ${t.target||'-'}, realisasi ${t.realisasi||'-'}`).join(', ');
+    return `Tulis narasi BAB 4 "Rencana & Melaksanakan Perbaikan" makalah improvement. Akar penyebab: ${rootStr||'-'}. Pelaksanaan: ${pelStr||'-'}. Intermediate target: ${tgtStr||'-'}. Jelaskan rencana perbaikan 5W2H, progres pelaksanaan, dan pencapaian intermediate target. Bahasa Indonesia formal, 200-250 kata.`;
+  },
   5: d=>`Tulis narasi BAB 5 "Meneliti Hasil". Data bulan 1: ${d.sb1||'?'}→${d.ss1||'?'}, bulan 2: ${d.sb2||'?'}→${d.ss2||'?'}, bulan 3: ${d.sb3||'?'}→${d.ss3||'?'}. Pencapaian: ${d.pencapaian||'?'}%. Bahasa Indonesia formal, 200-250 kata.`,
   6: d=>`Tulis narasi BAB 6 "Membuat Standar Baru". SOP: (1) ${d.sop1||'SOP 1'} ${d.e1||'?'}%, (2) ${d.sop2||'SOP 2'} ${d.e2||'?'}%, (3) ${d.sop3||'SOP 3'} ${d.e3||'?'}%. Status: ${d.status||'-'}. Bahasa Indonesia formal, 200-250 kata.`,
   7: d=>`Tulis narasi BAB 7 "Menentukan Tema Berikutnya". Tema terpilih: "${d.tema_next||'-'}". Kandidat: ${d.t1||'T1'} (${d.s1||'?'}), ${d.t2||'T2'} (${d.s2||'?'}), ${d.t3||'T3'} (${d.s3||'?'}). Target: ${d.target_next||'-'}. Bahasa Indonesia formal, 200-250 kata.`,
@@ -682,6 +2023,8 @@ async function generateContent(id) {
       } catch(e) { text = 'Error: ' + e.message; }
     }
     generatedContent[id] = text;
+    // Save narasi to formData for persistence
+    saveField(id, 'narasi_' + id, text);
     narasiEl.innerHTML = text.split('\n\n').map(p=>
       `<p class="narasi-text" style="margin-bottom:8px">${p.replace(/\n/g,' ')}</p>`).join('');
   } catch(e) {
