@@ -2182,7 +2182,7 @@ const AI_PROMPTS = {
     const judulItems = d.judul_items ? JSON.parse(d.judul_items) : [];
     const temaStr = temaItems.map((i,n)=>`${n+1}. ${i.masalah}: ${i.frekuensi}x`).join(', ');
     const judulStr = judulItems.map((i,n)=>`${n+1}. ${i.masalah}: ${i.frekuensi}x`).join(', ');
-    return `Tulis narasi profesional BAB 1 makalah improvement. Tema: "${d.tema||'Improvement'}". Judul: "${d.judul||'-'}". Area: ${d.area||'-'}. Periode: ${d.periode||'-'}. Data masalah tema: ${temaStr||'-'}. Data masalah judul: ${judulStr||'-'}. Baseline: ${d.baseline||'-'}. Target: ${d.target||'-'}. Sertakan sub-pembahasan: 1.1 Data & Penentuan Tema, 1.2 Breakdown Data & Penentuan Judul, 1.3 Initial Goal. Bahasa Indonesia formal, 200-250 kata, tanpa heading.`;
+    return `Tulis narasi profesional BAB 1 makalah improvement. Tema: "${d.tema||'Improvement'}". Judul: "${d.judul||'-'}". Area: ${d.area||'-'}. Periode: ${d.periode||'-'}. Data masalah tema: ${temaStr||'-'}. Data masalah judul: ${judulStr||'-'}. Baseline: ${d.baseline||'-'}. Target: ${d.target||'-'}. Sertakan sub-pembahasan: 1.1 Data & Penentuan Tema, 1.2 Breakdown Data & Penentuan Judul, 1.3 Initial Goal. Bahasa Indonesia formal, 1000-1200 kata (tulis dalam beberapa paragraf yang mengalir, pembahasan mendalam dan detail), tanpa heading.`;
   },
   2: d=>{
     const cats = ['man','machine','method','material','measurement','environment'];
@@ -2195,12 +2195,12 @@ const AI_PROMPTS = {
       const items = d['root_'+c] ? JSON.parse(d['root_'+c]).filter(v=>v) : [];
       return items.length ? 'Akar '+labels[c]+': '+items.join(', ') : '';
     }).filter(Boolean).join('. ');
-    return `Tulis narasi BAB 2 "Menganalisa Penyebab" makalah improvement menggunakan Diagram Ishikawa (Fishbone) dan analisis akar penyebab. Penyebab 6M: ${ishiStr||'belum diisi'}. Akar penyebab: ${rootStr||'belum diisi'}. Jelaskan analisis diagram Ishikawa, uraikan akar penyebab dari masing-masing kategori, serta identifikasi akar masalah paling dominan berdasarkan data pie chart. Bahasa Indonesia formal, 200-250 kata.`;
+    return `Tulis narasi BAB 2 "Menganalisa Penyebab" makalah improvement menggunakan Diagram Ishikawa (Fishbone) dan analisis akar penyebab. Penyebab 6M: ${ishiStr||'belum diisi'}. Akar penyebab: ${rootStr||'belum diisi'}. Jelaskan analisis diagram Ishikawa, uraikan akar penyebab dari masing-masing kategori, serta identifikasi akar masalah paling dominan berdasarkan data pie chart. Bahasa Indonesia formal, 1000-1200 kata (tulis dalam beberapa paragraf yang mengalir dengan pembahasan yang mendalam, detail, dan lengkap).`;
   },
   3: d=>{
     const items = d.scatter_items ? JSON.parse(d.scatter_items).filter(i=>i.penyebab) : [];
     const dataStr = items.map((i,n)=>`${n+1}. ${i.penyebab}: korelasi ${i.korelasi||'-'}, frekuensi ${i.frekuensi||'-'}`).join('. ');
-    return `Tulis narasi BAB 3 "Menguji Penyebab Dominan" makalah improvement menggunakan Scatter Diagram. Data penyebab dan korelasi: ${dataStr||'belum diisi'}. Metode uji: ${d.metode||'Scatter Diagram'}. Kesimpulan: ${d.kesimpulan||'-'}. Jelaskan pengujian korelasi menggunakan scatter diagram, identifikasi penyebab dominan berdasarkan nilai korelasi tertinggi, dan simpulkan penyebab yang perlu ditangani. Bahasa Indonesia formal, 200-250 kata.`;
+    return `Tulis narasi BAB 3 "Menguji Penyebab Dominan" makalah improvement menggunakan Scatter Diagram. Data penyebab dan korelasi: ${dataStr||'belum diisi'}. Metode uji: ${d.metode||'Scatter Diagram'}. Kesimpulan: ${d.kesimpulan||'-'}. Jelaskan pengujian korelasi menggunakan scatter diagram, identifikasi penyebab dominan berdasarkan nilai korelasi tertinggi, dan simpulkan penyebab yang perlu ditangani. Bahasa Indonesia formal, 1000-1200 kata (tulis dalam beberapa paragraf yang mengalir dengan pembahasan yang mendalam, detail, dan lengkap).`;
   },
   4: d=>{
     const roots = d.root_items ? JSON.parse(d.root_items) : [];
@@ -2209,11 +2209,11 @@ const AI_PROMPTS = {
     const pelStr = pel.map((p,i)=>`${i+1}. ${p.aksi||'-'} (${p.progress||0}% - ${p.status||'-'})`).join(', ');
     const tgt = d.target_items ? JSON.parse(d.target_items) : [];
     const tgtStr = tgt.map(t=>`${t.periode}: target ${t.target||'-'}, realisasi ${t.realisasi||'-'}`).join(', ');
-    return `Tulis narasi BAB 4 "Rencana & Melaksanakan Perbaikan" makalah improvement. Akar penyebab: ${rootStr||'-'}. Pelaksanaan: ${pelStr||'-'}. Intermediate target: ${tgtStr||'-'}. Jelaskan rencana perbaikan 5W2H, progres pelaksanaan, dan pencapaian intermediate target. Bahasa Indonesia formal, 200-250 kata.`;
+    return `Tulis narasi BAB 4 "Rencana & Melaksanakan Perbaikan" makalah improvement. Akar penyebab: ${rootStr||'-'}. Pelaksanaan: ${pelStr||'-'}. Intermediate target: ${tgtStr||'-'}. Jelaskan rencana perbaikan 5W2H, progres pelaksanaan, dan pencapaian intermediate target. Bahasa Indonesia formal, 1000-1200 kata (tulis dalam beberapa paragraf yang mengalir dengan pembahasan yang mendalam, detail, dan lengkap).`;
   },
-  5: d=>`Tulis narasi BAB 5 "Meneliti Hasil". Data bulan 1: ${d.sb1||'?'}→${d.ss1||'?'}, bulan 2: ${d.sb2||'?'}→${d.ss2||'?'}, bulan 3: ${d.sb3||'?'}→${d.ss3||'?'}. Pencapaian: ${d.pencapaian||'?'}%. Bahasa Indonesia formal, 200-250 kata.`,
-  6: d=>`Tulis narasi BAB 6 "Membuat Standar Baru". SOP: (1) ${d.sop1||'SOP 1'} ${d.e1||'?'}%, (2) ${d.sop2||'SOP 2'} ${d.e2||'?'}%, (3) ${d.sop3||'SOP 3'} ${d.e3||'?'}%. Status: ${d.status||'-'}. Bahasa Indonesia formal, 200-250 kata.`,
-  7: d=>`Tulis narasi BAB 7 "Menentukan Tema Berikutnya". Tema terpilih: "${d.tema_next||'-'}". Kandidat: ${d.t1||'T1'} (${d.s1||'?'}), ${d.t2||'T2'} (${d.s2||'?'}), ${d.t3||'T3'} (${d.s3||'?'}). Target: ${d.target_next||'-'}. Bahasa Indonesia formal, 200-250 kata.`,
+  5: d=>`Tulis narasi BAB 5 "Meneliti Hasil". Data bulan 1: ${d.sb1||'?'}→${d.ss1||'?'}, bulan 2: ${d.sb2||'?'}→${d.ss2||'?'}, bulan 3: ${d.sb3||'?'}→${d.ss3||'?'}. Pencapaian: ${d.pencapaian||'?'}%. Bahasa Indonesia formal, 1000-1200 kata (tulis dalam beberapa paragraf yang mengalir dengan pembahasan yang mendalam, detail, dan lengkap).`,
+  6: d=>`Tulis narasi BAB 6 "Membuat Standar Baru". SOP: (1) ${d.sop1||'SOP 1'} ${d.e1||'?'}%, (2) ${d.sop2||'SOP 2'} ${d.e2||'?'}%, (3) ${d.sop3||'SOP 3'} ${d.e3||'?'}%. Status: ${d.status||'-'}. Bahasa Indonesia formal, 1000-1200 kata (tulis dalam beberapa paragraf yang mengalir dengan pembahasan yang mendalam, detail, dan lengkap).`,
+  7: d=>`Tulis narasi BAB 7 "Menentukan Tema Berikutnya". Tema terpilih: "${d.tema_next||'-'}". Kandidat: ${d.t1||'T1'} (${d.s1||'?'}), ${d.t2||'T2'} (${d.s2||'?'}), ${d.t3||'T3'} (${d.s3||'?'}). Target: ${d.target_next||'-'}. Bahasa Indonesia formal, 1000-1200 kata (tulis dalam beberapa paragraf yang mengalir dengan pembahasan yang mendalam, detail, dan lengkap).`,
 };
 
 async function generateContent(id) {
@@ -2242,7 +2242,7 @@ async function generateContent(id) {
             headers:{'Content-Type':'application/json'},
             body: JSON.stringify({
               contents:[{parts:[{text:AI_PROMPTS[id](d)}]}],
-              generationConfig:{temperature:0.7,maxOutputTokens:1500}
+              generationConfig:{temperature:0.7,maxOutputTokens:4000}
             })
           }
         );
@@ -2301,6 +2301,185 @@ function renderPreview() {
 }
 
 // ── PDF DOWNLOAD ─────────────────────────────────────────────────────────────
+// ============ PDF DIAGRAM HELPERS (semua diagram nyata per BAB) ============
+async function makeChartImage(config, w=600, h=280) {
+  const oc = document.createElement('canvas');
+  oc.width = w; oc.height = h;
+  oc.style.position = 'absolute'; oc.style.left = '-9999px';
+  document.body.appendChild(oc);
+  const ctx = oc.getContext('2d');
+  const chart = new Chart(ctx, config);
+  await new Promise(r=>setTimeout(r,400));
+  const img = oc.toDataURL('image/png');
+  chart.destroy();
+  document.body.removeChild(oc);
+  return img;
+}
+
+function makeSvgImage(svgStr, w=600, h=280) {
+  return new Promise((resolve) => {
+    const oc = document.createElement('canvas');
+    oc.width = w; oc.height = h;
+    const ctx = oc.getContext('2d');
+    const blob = new Blob([svgStr], {type:'image/svg+xml;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      ctx.fillStyle = '#fafaf8'; ctx.fillRect(0,0,w,h);
+      ctx.drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      resolve(oc.toDataURL('image/png'));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
+}
+
+function buildIshikawaSVG(d) {
+  const cats = [
+    {key:'man',x:130,label:'Man',color:'#e74c3c',top:true},
+    {key:'machine',x:240,label:'Machine',color:'#3498db',top:true},
+    {key:'method',x:350,label:'Method',color:'#2ecc71',top:true},
+    {key:'material',x:130,label:'Material',color:'#f39c12',top:false},
+    {key:'measurement',x:240,label:'Measurement',color:'#9b59b6',top:false},
+    {key:'environment',x:350,label:'Environment',color:'#1abc9c',top:false},
+  ];
+  const valOf = (key) => {
+    const arr = d['ishi_'+key] ? JSON.parse(d['ishi_'+key]).filter(v=>v) : [];
+    return arr.length ? arr.join(', ') : '-';
+  };
+  const topSvg = cats.filter(c=>c.top).map(b=>`
+    <line x1="${b.x}" y1="60" x2="${b.x+30}" y2="130" stroke="${b.color}" stroke-width="1.5"/>
+    <rect x="${b.x-45}" y="40" width="90" height="22" rx="4" fill="${b.color}"/>
+    <text x="${b.x}" y="55" text-anchor="middle" fill="white" font-size="9" font-weight="bold">${b.label}</text>
+    <text x="${b.x}" y="78" text-anchor="middle" fill="#333" font-size="7">${valOf(b.key).substring(0,20)}</text>
+  `).join('');
+  const botSvg = cats.filter(c=>!c.top).map(b=>`
+    <line x1="${b.x}" y1="200" x2="${b.x+30}" y2="130" stroke="${b.color}" stroke-width="1.5"/>
+    <rect x="${b.x-45}" y="198" width="90" height="22" rx="4" fill="${b.color}"/>
+    <text x="${b.x}" y="213" text-anchor="middle" fill="white" font-size="9" font-weight="bold">${b.label}</text>
+    <text x="${b.x}" y="232" text-anchor="middle" fill="#333" font-size="7">${valOf(b.key).substring(0,20)}</text>
+  `).join('');
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="280" viewBox="0 0 500 260">
+    <rect width="500" height="260" fill="#fafaf8"/>
+    <line x1="60" y1="130" x2="420" y2="130" stroke="#333" stroke-width="2.5"/>
+    <rect x="420" y="110" width="70" height="40" rx="6" fill="#c0392b"/>
+    <text x="455" y="135" text-anchor="middle" fill="white" font-size="11" font-weight="bold">MASALAH</text>
+    ${topSvg}${botSvg}
+  </svg>`;
+}
+
+async function getChapterDiagrams(stepId, d) {
+  const diagrams = [];
+
+  if (stepId === 1) {
+    const temaItems = (d.tema_items ? JSON.parse(d.tema_items) : []).filter(i=>i.masalah && i.frekuensi);
+    const judulItems = (d.judul_items ? JSON.parse(d.judul_items) : []).filter(i=>i.masalah && i.frekuensi);
+    if (temaItems.length) {
+      diagrams.push({label:'Diagram Data Masalah Tema', img: await makeChartImage({type:'bar',
+        data:{labels:temaItems.map(i=>i.masalah.substring(0,16)),
+          datasets:[{label:'Frekuensi',data:temaItems.map(i=>+i.frekuensi||0),backgroundColor:'#c9a227cc',borderColor:'#c9a227',borderWidth:2,borderRadius:6}]},
+        options:{animation:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}})});
+    }
+    if (judulItems.length) {
+      diagrams.push({label:'Diagram Data Masalah Judul', img: await makeChartImage({type:'bar',
+        data:{labels:judulItems.map(i=>i.masalah.substring(0,16)),
+          datasets:[{label:'Frekuensi',data:judulItems.map(i=>+i.frekuensi||0),backgroundColor:'#1a6899cc',borderColor:'#1a6899',borderWidth:2,borderRadius:6}]},
+        options:{animation:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}})});
+    }
+    if (!diagrams.length) {
+      diagrams.push({label:'Diagram Data Masalah', img: await makeChartImage({type:'bar',
+        data:{labels:['Data belum diisi'],datasets:[{data:[1],backgroundColor:'#c9a227cc'}]},
+        options:{animation:false,plugins:{legend:{display:false}}}})});
+    }
+  }
+
+  else if (stepId === 2) {
+    diagrams.push({label:'Diagram Ishikawa (Fishbone)', img: await makeSvgImage(buildIshikawaSVG(d), 600, 280)});
+    const cats = [
+      {key:'man',label:'Man',color:'#e74c3c'},{key:'machine',label:'Machine',color:'#3498db'},
+      {key:'method',label:'Method',color:'#2ecc71'},{key:'material',label:'Material',color:'#f39c12'},
+      {key:'measurement',label:'Measurement',color:'#9b59b6'},{key:'environment',label:'Environment',color:'#1abc9c'},
+    ];
+    const labels=[], counts=[], colors=[];
+    cats.forEach(cat=>{
+      const items = (d['root_'+cat.key] ? JSON.parse(d['root_'+cat.key]) : []).filter(v=>v && v.trim());
+      if (items.length) { labels.push(cat.label+' ('+items.length+')'); counts.push(items.length); colors.push(cat.color); }
+    });
+    if (counts.length) {
+      diagrams.push({label:'Diagram Pie — Akar Penyebab', img: await makeChartImage({type:'pie',
+        data:{labels,datasets:[{data:counts,backgroundColor:colors.map(c=>c+'cc'),borderColor:colors,borderWidth:2}]},
+        options:{animation:false}})});
+    }
+  }
+
+  else if (stepId === 3) {
+    const items = (d.scatter_items ? JSON.parse(d.scatter_items) : []).filter(i=>i.penyebab && i.korelasi);
+    const colors = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#c0392b'];
+    if (items.length) {
+      const datasets = items.map((item,i)=>({label:item.penyebab.substring(0,20),
+        data:[{x:+item.frekuensi||i+1,y:+item.korelasi||0}],
+        backgroundColor:colors[i%colors.length]+'aa',borderColor:colors[i%colors.length],
+        borderWidth:2,pointRadius:Math.max(8,(+item.korelasi||50)/8)}));
+      diagrams.push({label:'Scatter Diagram — Uji Korelasi Penyebab', img: await makeChartImage({type:'scatter',
+        data:{datasets},options:{animation:false,plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:10}}}}})});
+    } else {
+      diagrams.push({label:'Scatter Diagram — Uji Korelasi Penyebab', img: await makeChartImage({type:'scatter',
+        data:{datasets:[{label:'Data belum diisi',data:[{x:1,y:50}],backgroundColor:'#7b3fa0aa'}]},
+        options:{animation:false}})});
+    }
+  }
+
+  else if (stepId === 4) {
+    const pel = (d.pelaksanaan_items ? JSON.parse(d.pelaksanaan_items) : []).filter(i=>i.aksi);
+    const tgt = (d.target_items ? JSON.parse(d.target_items) : []).filter(i=>i.periode);
+    if (pel.length) {
+      diagrams.push({label:'Progress Pelaksanaan Aksi', img: await makeChartImage({type:'bar',
+        data:{labels:pel.map(i=>i.aksi.substring(0,15)),
+          datasets:[{label:'Progress (%)',data:pel.map(i=>+i.progress||0),
+            backgroundColor:pel.map(i=>(+i.progress||0)>=100?'#2ecc71cc':(+i.progress||0)>=50?'#f39c12cc':'#e74c3ccc'),
+            borderWidth:1.5}]},
+        options:{animation:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,max:100}}}})});
+    }
+    if (tgt.length) {
+      diagrams.push({label:'Target vs Realisasi (Intermediate Target)', img: await makeChartImage({type:'line',
+        data:{labels:tgt.map(i=>i.periode),
+          datasets:[{label:'Target',data:tgt.map(i=>+i.target||0),borderColor:'#3498db',backgroundColor:'#3498db33',tension:0.3,pointRadius:5},
+                    {label:'Realisasi',data:tgt.map(i=>+i.realisasi||0),borderColor:'#2ecc71',backgroundColor:'#2ecc7133',tension:0.3,pointRadius:5}]},
+        options:{animation:false,plugins:{legend:{position:'bottom',labels:{font:{size:9}}}},scales:{y:{beginAtZero:true}}}})});
+    }
+    if (!diagrams.length) {
+      diagrams.push({label:'Progress Pelaksanaan Aksi', img: await makeChartImage({type:'bar',
+        data:{labels:['Data belum diisi'],datasets:[{data:[0],backgroundColor:'#1a4fa088'}]},
+        options:{animation:false,plugins:{legend:{display:false}}}})});
+    }
+  }
+
+  else if (stepId === 5) {
+    diagrams.push({label:'Perbandingan Sebelum vs Sesudah', img: await makeChartImage({type:'bar',
+      data:{labels:['Bulan 1','Bulan 2','Bulan 3'],
+        datasets:[{label:'Sebelum',data:[+d.sb1||0,+d.sb2||0,+d.sb3||0],backgroundColor:'#c0392b88',borderColor:'#c0392b',borderWidth:2,borderRadius:4},
+                  {label:'Sesudah',data:[+d.ss1||0,+d.ss2||0,+d.ss3||0],backgroundColor:'#1a7a6e88',borderColor:'#1a7a6e',borderWidth:2,borderRadius:4}]},
+      options:{animation:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true}}}})});
+  }
+
+  else if (stepId === 6) {
+    diagrams.push({label:'Efektivitas Standar Baru', img: await makeChartImage({type:'doughnut',
+      data:{labels:[(d.sop1||'SOP 1').substring(0,16),(d.sop2||'SOP 2').substring(0,16),(d.sop3||'SOP 3').substring(0,16)],
+        datasets:[{data:[+d.e1||0,+d.e2||0,+d.e3||0],backgroundColor:['#c9a227cc','#c05c1acc','#1a7a9acc'],borderWidth:2}]},
+      options:{animation:false}})});
+  }
+
+  else if (stepId === 7) {
+    diagrams.push({label:'Skor Kandidat Tema Berikutnya', img: await makeChartImage({type:'bar',
+      data:{labels:[(d.t1||'T1').substring(0,14),(d.t2||'T2').substring(0,14),(d.t3||'T3').substring(0,14)],
+        datasets:[{data:[+d.s1||0,+d.s2||0,+d.s3||0],backgroundColor:['#1a7a9acc','#3b82f6aa','#7b3fa088'],borderWidth:2,borderRadius:6}]},
+      options:{animation:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:110}}}})});
+  }
+
+  return diagrams;
+}
+
 async function downloadPDF() {
   const overlay = document.getElementById('loadingOverlay');
   const loadText = document.getElementById('loadingText');
@@ -2469,54 +2648,27 @@ async function downloadPDF() {
       y += 8;
     }
 
-    // Chart (render to canvas, then embed)
+    // Chart (render to canvas, then embed) — SEMUA diagram per BAB
     loadSub.textContent = 'Membuat grafik...';
     try {
-      // Draw chart to offscreen canvas
-      const oc = document.createElement('canvas');
-      oc.width=600; oc.height=280;
-      oc.style.position='absolute'; oc.style.left='-9999px';
-      document.body.appendChild(oc);
-      const tempCtx = oc.getContext('2d');
       const d = formData[s.id]||{};
+      const diagrams = await getChapterDiagrams(s.id, d);
 
-      let tempChart = null;
-      if (s.chartType==='bar_gap') {
-        tempChart = new Chart(tempCtx,{type:'bar',data:{labels:['Baseline','Target'],datasets:[{data:[+d.baseline||18,+d.goal||0],backgroundColor:['#c0392b88','#1a7a6e88'],borderColor:['#c0392b','#1a7a6e'],borderWidth:2,borderRadius:6}]},options:{animation:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
-      } else if (s.chartType==='pareto') {
-        const it=[{n:(d.p1||'P1').substring(0,14),v:+d.f1||42},{n:(d.p2||'P2').substring(0,14),v:+d.f2||31},{n:(d.p3||'P3').substring(0,14),v:+d.f3||18},{n:(d.p4||'P4').substring(0,14),v:+d.f4||9}].sort((a,b)=>b.v-a.v);
-        const tot=it.reduce((s,i)=>s+i.v,0); let c2=0;
-        const p2=it.map(i=>{c2+=i.v;return+(c2/tot*100).toFixed(1);});
-        tempChart = new Chart(tempCtx,{type:'bar',data:{labels:it.map(i=>i.n),datasets:[{type:'bar',label:'Frekuensi',data:it.map(i=>i.v),backgroundColor:'#c0392b88',borderColor:'#c0392b',borderWidth:2,yAxisID:'y'},{type:'line',label:'Kumulatif %',data:p2,borderColor:'#c9a227',backgroundColor:'transparent',borderWidth:2.5,pointRadius:5,yAxisID:'y2'}]},options:{animation:false,scales:{y:{beginAtZero:true},y2:{position:'right',max:110}}}});
-      } else if (s.chartType==='radar') {
-        tempChart = new Chart(tempCtx,{type:'radar',data:{labels:[d.d1||'D1',d.d2||'D2',d.d3||'D3'],datasets:[{label:'Korelasi',data:[+d.k1||94,+d.k2||82,+d.k3||67],borderColor:'#7b3fa0',backgroundColor:'#7b3fa033',borderWidth:2.5,pointBackgroundColor:'#7b3fa0'}]},options:{animation:false,scales:{r:{beginAtZero:true,max:100}}}});
-      } else if (s.chartType==='hbar') {
-        tempChart = new Chart(tempCtx,{type:'bar',data:{labels:[(d.a1||'Aksi 1').substring(0,20),(d.a2||'Aksi 2').substring(0,20),(d.a3||'Aksi 3').substring(0,20)],datasets:[{data:[+d.pr1||100,+d.pr2||100,+d.pr3||90],backgroundColor:'#1a4fa088',borderColor:'#1a4fa0',borderWidth:2,borderRadius:4}]},options:{animation:false,indexAxis:'y',scales:{x:{beginAtZero:true,max:110}}}});
-      } else if (s.chartType==='grouped_bar') {
-        tempChart = new Chart(tempCtx,{type:'bar',data:{labels:['Bulan 1','Bulan 2','Bulan 3'],datasets:[{label:'Sebelum',data:[+d.sb1||18,+d.sb2||16,+d.sb3||17],backgroundColor:'#c0392b88',borderColor:'#c0392b',borderWidth:2,borderRadius:4},{label:'Sesudah',data:[+d.ss1||9,+d.ss2||4,+d.ss3||0],backgroundColor:'#1a7a6e88',borderColor:'#1a7a6e',borderWidth:2,borderRadius:4}]},options:{animation:false,scales:{y:{beginAtZero:true}}}});
-      } else if (s.chartType==='pie') {
-        tempChart = new Chart(tempCtx,{type:'doughnut',data:{labels:[(d.sop1||'SOP 1').substring(0,16),(d.sop2||'SOP 2').substring(0,16),(d.sop3||'SOP 3').substring(0,16)],datasets:[{data:[+d.e1||96,+d.e2||91,+d.e3||85],backgroundColor:['#c9a227cc','#c05c1acc','#1a7a9acc'],borderWidth:2}]},options:{animation:false}});
-      } else if (s.chartType==='vbar_rank') {
-        tempChart = new Chart(tempCtx,{type:'bar',data:{labels:[(d.t1||'T1').substring(0,14),(d.t2||'T2').substring(0,14),(d.t3||'T3').substring(0,14)],datasets:[{data:[+d.s1||88,+d.s2||74,+d.s3||63],backgroundColor:['#1a7a9acc','#3b82f6aa','#7b3fa088'],borderWidth:2,borderRadius:6}]},options:{animation:false,scales:{y:{beginAtZero:true,max:110}}}});
+      for (const diag of diagrams) {
+        y = checkY(y, 56);
+        doc.setFillColor(248,247,242);
+        doc.setDrawColor(220,215,200); doc.setLineWidth(0.3);
+        doc.roundedRect(ML, y, CW, 52, 3, 3, 'FD');
+        doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+        doc.setTextColor(sr, sg, sb2);
+        doc.text('📈 ' + diag.label.toUpperCase(), ML+4, y+6);
+        if (diag.img) doc.addImage(diag.img, 'PNG', ML+4, y+8, CW-8, 40);
+        y += 56;
       }
-
-      await new Promise(r=>setTimeout(r,400));
-      const imgData = oc.toDataURL('image/png');
-      if (tempChart) tempChart.destroy();
-      document.body.removeChild(oc);
-
-      // Chart box
-      doc.setFillColor(248,247,242);
-      doc.setDrawColor(220,215,200); doc.setLineWidth(0.3);
-      doc.roundedRect(ML, y, CW, 52, 3, 3, 'FD');
-      doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
-      doc.setTextColor(sr, sg, sb2);
-      doc.text('📈 GRAFIK STATISTIK', ML+4, y+6);
-      doc.addImage(imgData, 'PNG', ML+4, y+8, CW-8, 40);
-      y += 56;
     } catch(e) {
       console.warn('Chart error:', e);
       y += 10;
+
     }
 
     y += 4;
